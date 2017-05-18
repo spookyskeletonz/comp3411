@@ -9,13 +9,106 @@ import java.util.*;
 import java.io.*;
 import java.net.*;
 
+class Coordinate {
+   private int x;
+   private int y;
+
+   public Coordinate(int x, int y){
+      this.x = x;
+      this.y = y;
+   }
+
+   public int get_x(){
+      return this.x;
+   }
+
+   public int get_y(){
+      return this.y;
+   }
+
+   public void set_x(int x){
+      this.x = x;
+   }
+
+   public void set_y(int y){
+      this.y = y;
+   }
+
+}
+
 public class Agent {
 
+   private Map<Coordinate, Character> map = new HashMap<Coordinate, Character>();
+   private char lastMove = 'Z';
+   private Coordinate currentLocation = new Coordinate(0,0);
+   private int direction = 1;
+
+   public void updateMapAndDirection(char view[][]) {
+      if(lastMove == 'Z'){
+         int x = -2;
+         for(int counter = 0; counter < 5; counter++){
+            int y = 2;
+            for(int counter2 = 0; counter2 < 5; counter2++){
+               if(counter == 0 && counter2 == 0) continue;
+               Coordinate coord = new Coordinate(x,y);
+               map.put(coord, view[counter2][counter]);
+               y--;
+            }
+            x++;
+         }
+      } else if(lastMove == 'l'){
+         direction++;
+         direction = direction%4;
+      } else if(lastMove == 'r'){
+         direction--;
+         direction = direction%4;
+      } else if(lastMove == 'f'){
+         if(direction == 0){
+            currentLocation.set_x(currentLocation.get_x()+1);
+            int viewCounter = 0;
+            for(int counter = 2; counter <= -2; counter--){
+               Coordinate discovery = new Coordinate(currentLocation.get_x()+2, currentLocation.get_y()+counter);
+               map.put(discovery, view[viewCounter][0]);
+               viewCounter++;
+            }
+         } else if(direction == 1){
+            currentLocation.set_y(currentLocation.get_y()+1);
+            int viewCounter = 0;
+            for(int counter = -2; counter <= 2; counter++){
+               Coordinate discovery = new Coordinate(currentLocation.get_x()+counter, currentLocation.get_y()+2);
+               map.put(discovery, view[viewCounter][0]);
+               viewCounter++;
+            }
+         } else if(direction == 2) {
+            currentLocation.set_x(currentLocation.get_x()-1);
+            int viewCounter = 0;
+            for(int counter = 2; counter <= -2; counter--){
+               Coordinate discovery = new Coordinate(currentLocation.get_x()-2, currentLocation.get_y()+counter);
+               map.put(discovery, view[viewCounter][0]);
+               viewCounter++;
+            }
+         } else if(direction == 3) {
+            currentLocation.set_y(currentLocation.get_y()-1);
+            int viewCounter = 0;
+            for(int counter = -2; counter <= 2; counter--){
+               Coordinate discovery = new Coordinate(currentLocation.get_x()+counter, currentLocation.get_y()-2);
+               map.put(discovery, view[viewCounter][0]);
+               viewCounter++;
+            }
+         }
+      }
+   }
    public char get_action( char view[][] ) {
 
-      // REPLACE THIS CODE WITH AI TO CHOOSE ACTION
+      updateMapAndDirection(view);
+      print_view(view);
+      if(view[1][2] == 'T' || view[1][2] == '-' || view[1][2] == '*' || view[1][2] == '~'){
+         return 'r';
+      } else {
+         return 'f';
+      }
 
-      int ch=0;
+      /*int ch=0;
 
       System.out.print("Enter Action(s): ");
 
@@ -33,9 +126,9 @@ public class Agent {
       }
       catch (IOException e) {
          System.out.println ("IO error:" + e );
-      }
+      }*/
 
-      return 0;
+      //return 0;
    }
 
    void print_view( char view[][] )
