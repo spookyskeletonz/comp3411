@@ -41,6 +41,7 @@ public class Agent {
    private Map<Coordinate, Character> map = new HashMap<Coordinate, Character>();
    private char lastMove = 'Z';
    private Coordinate currentLocation = new Coordinate(0,0);
+   // Store character direction
    private int direction = 1;
 
    public void updateMapAndDirection(char view[][]) {
