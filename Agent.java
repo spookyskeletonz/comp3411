@@ -1,4 +1,4 @@
-<<<<<<< Updated upstream
+
 /*********************************************
  *  Agent.java 
  *  Sample Agent for Text-Based Adventure Game
@@ -82,7 +82,8 @@ public class Agent {
 	private Coordinate currentLocation = new Coordinate(0, 0);
 	// Store character direction
 	private int direction = 1;
-
+   // Store inventory
+   private Map<String, Boolean> inventory = new HashMap<String, Boolean>();
 
 	public void updateMapAndDirection(char view[][]) {
       // Start of game,  map starting view
@@ -159,6 +160,11 @@ public class Agent {
                viewCounter++;
             }
          }
+         //if there was an item  in the current location it is now registered in inventory
+         if(map.get(currentLocation) == 'a') inventory.put("axe", true);
+         if(map.get(currentLocation) == 'd') inventory.put("dynamite", true);
+         if(map.get(currentLocation) == 'k') inventory.put("key", true);
+         if(map.get(currentLocation) == '$') inventory.put("treasure", true);
       }
    }
 
