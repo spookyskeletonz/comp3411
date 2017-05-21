@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 /*********************************************
  *  Agent.java 
  *  Sample Agent for Text-Based Adventure Game
@@ -127,7 +128,7 @@ public class Agent {
             int viewCounter = 0;
             for(int counter = 2; counter <= -2; counter--){
                Coordinate discovery = new Coordinate(currentLocation.get_x()+2, currentLocation.get_y()+counter);
-               map.put(discovery, view[viewCounter][0]);
+               map.put(discovery, view[0][viewCounter]);
                viewCounter++;
             }
          // Move North
@@ -136,7 +137,7 @@ public class Agent {
             int viewCounter = 0;
             for(int counter = -2; counter <= 2; counter++){
                Coordinate discovery = new Coordinate(currentLocation.get_x()+counter, currentLocation.get_y()+2);
-               map.put(discovery, view[viewCounter][0]);
+               map.put(discovery, view[0][viewCounter]);
                viewCounter++;
             }
          // Move West
@@ -145,7 +146,7 @@ public class Agent {
             int viewCounter = 0;
             for(int counter = 2; counter <= -2; counter--){
                Coordinate discovery = new Coordinate(currentLocation.get_x()-2, currentLocation.get_y()+counter);
-               map.put(discovery, view[viewCounter][0]);
+               map.put(discovery, view[0][viewCounter]);
                viewCounter++;
             }
          // Move South
@@ -154,7 +155,7 @@ public class Agent {
             int viewCounter = 0;
             for(int counter = -2; counter <= 2; counter--){
                Coordinate discovery = new Coordinate(currentLocation.get_x()+counter, currentLocation.get_y()-2);
-               map.put(discovery, view[viewCounter][0]);
+               map.put(discovery, view[0][viewCounter]);
                viewCounter++;
             }
          }
@@ -265,4 +266,3 @@ public class Agent {
 		}
 	}
 }
-
