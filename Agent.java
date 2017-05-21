@@ -112,11 +112,11 @@ public class Agent {
 		}
 		
 		// 
-		if (frontView == ' '){
-			move = 'f';
-		} else if (isObstacle(frontView) == true){
+		if (isObstacle(frontView)){
 			move = 'r';
-		}
+		} else {
+         move = 'f';
+      }
 		
 		if (following == true && isObstacle(leftView) == false && lastMove != 'l'){
 			move = 'l';
