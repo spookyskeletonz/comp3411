@@ -1,4 +1,3 @@
-
 /*********************************************
  *  Agent.java 
  *  Sample Agent for Text-Based Adventure Game
@@ -82,10 +81,57 @@ public class Agent {
 	private Coordinate currentLocation = new Coordinate(0, 0);
 	// Store character direction
 	private int direction = 1;
+	// Following a wall 
+	private boolean following = false;
    // Store inventory
    private Map<String, Boolean> inventory = new HashMap<String, Boolean>();
 
+	
+	
+	
+	private boolean isObstacle(char spaceToCheck) {
+		if (spaceToCheck == 'T' || spaceToCheck == '-' || spaceToCheck == '*' || spaceToCheck == '~'){
+			return true;
+		}
+		return false;
+		
+	}
+	
+	public char wallFollow(char view[][]){
+		char move = 'Z';
+
+		char frontView = view[1][2];
+		char backView = view[3][2];
+		char rightView = view[2][3];
+		char leftView = view[2][1];
+		
+		
+		// If any obstacle to the left, we are following
+		if (isObstacle(leftView) == true){
+			following = true;
+		}
+		
+		// 
+		if (frontView == ' '){
+			move = 'f';
+		} else if (isObstacle(frontView) == true){
+			move = 'r';
+		}
+		
+		if (following == true && isObstacle(leftView) == false && lastMove != 'l'){
+			move = 'l';
+		}
+		
+		if(explored.get(currentLocation) == 1){
+			following = false;
+		}
+		
+		lastMove = move;
+		return move;
+   }
+
 	public void updateMapAndDirection(char view[][]) {
+
       // Start of game,  map starting view
       if(lastMove == 'Z'){
          int x = -2;
@@ -95,10 +141,9 @@ public class Agent {
                Coordinate coord = new Coordinate(x,y);
                
                // At spawned coordinate
-               if(x == 0 && y == 0){
+               if(x == 0 && y == 0){            	   
             	   map.put(coord, '!');
-            	   explored.put(coord, 1);
-            	   Coordinate origin = new Coordinate(0,0);
+            	   explored.put(coord, 0);
             	   y--;
             	   continue;
                }
@@ -108,11 +153,6 @@ public class Agent {
             }
             x++;
          }
-//         for(Coordinate coord:map.keySet()) {
-//        	   System.out.println(coord);
-//        	   System.out.println(map.get(coord));
-//         }
-//         
 
       // Update direction of character if rotated
       } else if(lastMove == 'l'){
@@ -121,15 +161,20 @@ public class Agent {
       } else if(lastMove == 'r'){
          direction--;
          direction = direction%4;
+         if (direction < 0) direction += 4;
       // Update map if last move was to move forward
       } else if(lastMove == 'f'){
+         // Add current coordinate into explored
+         explored.put(currentLocation, 1);
          // Move East
          if(direction == 0){
-            currentLocation.set_x(currentLocation.get_x()+1);
+        	currentLocation.set_x(currentLocation.get_x()+1);
             int viewCounter = 0;
-            for(int counter = 2; counter <= -2; counter--){
+            for(int counter = 2; counter >= -2; counter--){
                Coordinate discovery = new Coordinate(currentLocation.get_x()+2, currentLocation.get_y()+counter);
                map.put(discovery, view[0][viewCounter]);
+               explored.put(discovery, 0);
+               System.out.print("put into map" + view[0][viewCounter]);
                viewCounter++;
             }
          // Move North
@@ -139,28 +184,38 @@ public class Agent {
             for(int counter = -2; counter <= 2; counter++){
                Coordinate discovery = new Coordinate(currentLocation.get_x()+counter, currentLocation.get_y()+2);
                map.put(discovery, view[0][viewCounter]);
+               explored.put(discovery, 0);
+               System.out.print("put into map = |" +view[0][viewCounter] + "|");
+
                viewCounter++;
             }
          // Move West
          } else if(direction == 2) {
             currentLocation.set_x(currentLocation.get_x()-1);
             int viewCounter = 0;
-            for(int counter = 2; counter <= -2; counter--){
+            for(int counter = -2; counter <= 2; counter++){
+//               System.out.print("WEST\n");
                Coordinate discovery = new Coordinate(currentLocation.get_x()-2, currentLocation.get_y()+counter);
+               System.out.print("DISCOVERY IS " + discovery.get_x() + "," + discovery.get_y()+ "\n");
+               System.out.print("ViewCounter = " + viewCounter + "\n");
                map.put(discovery, view[0][viewCounter]);
+               explored.put(discovery, 0);
+               System.out.print("put into map = |" + view[0][viewCounter] + "|" + "\n");
                viewCounter++;
             }
          // Move South
          } else if(direction == 3) {
             currentLocation.set_y(currentLocation.get_y()-1);
             int viewCounter = 0;
-            for(int counter = -2; counter <= 2; counter--){
+            for(int counter = 2; counter >= -2; counter--){
                Coordinate discovery = new Coordinate(currentLocation.get_x()+counter, currentLocation.get_y()-2);
                map.put(discovery, view[0][viewCounter]);
+               explored.put(discovery, 0);
+               System.out.print("put into map = |" +view[0][viewCounter] + "|");
                viewCounter++;
             }
          }
-         //if there was an item  in the current location it is now registered in inventory
+         //if current location had item then add to inventory hash
          if(map.get(currentLocation) == 'a') inventory.put("axe", true);
          if(map.get(currentLocation) == 'd') inventory.put("dynamite", true);
          if(map.get(currentLocation) == 'k') inventory.put("key", true);
@@ -172,30 +227,17 @@ public class Agent {
 
 		// At each move update map and direction
 		updateMapAndDirection(view);
+		System.out.print("line 140 last move was " + lastMove + " current direction = " + direction + "\n");
+		System.out.print("x coordinate = " + currentLocation.get_x() + " y coordinate = " + currentLocation.get_y() + "\n");
+		System.out.print("current location = " + map.get(currentLocation));
 		print_view(view);
-		if (view[1][2] == 'T' || view[1][2] == '-' || view[1][2] == '*' || view[1][2] == '~') {
-			lastMove = 'r';
-			return 'r';
-		} else {
-			lastMove = 'f';
-			return 'f';
+		char nextMove = wallFollow(view);
+		
+		if (view[0][2] == '$'){
+			nextMove = 'f';
 		}
-
-		/*
-		 * int ch=0;
-		 * 
-		 * System.out.print("Enter Action(s): ");
-		 * 
-		 * try { while ( ch != -1 ) { // read character from keyboard ch =
-		 * System.in.read();
-		 * 
-		 * switch( ch ) { // if character is a valid action, return it case 'F':
-		 * case 'L': case 'R': case 'C': case 'U': case 'B': case 'f': case 'l':
-		 * case 'r': case 'c': case 'u': case 'b': return((char) ch ); } } }
-		 * catch (IOException e) { System.out.println ("IO error:" + e ); }
-		 */
-
-		// return 0;
+		
+		return nextMove;
 	}
 
 	void print_view(char view[][]) {
