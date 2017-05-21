@@ -1,4 +1,3 @@
-
 /*********************************************
  *  Agent.java 
  *  Sample Agent for Text-Based Adventure Game
@@ -84,6 +83,8 @@ public class Agent {
 	private int direction = 1;
 	// Following a wall 
 	private boolean following = false;
+   // Store inventory
+   private Map<String, Boolean> inventory = new HashMap<String, Boolean>();
 
 	
 	
@@ -107,7 +108,6 @@ public class Agent {
 		
 		// If any obstacle to the left, we are following
 		if (isObstacle(leftView) == true){
-//			System.out.print("following set to true");
 			following = true;
 		}
 		
@@ -118,21 +118,14 @@ public class Agent {
 			move = 'r';
 		}
 		
-//		System.out.print("line 121 LAST MOVE WAS " + lastMove + " DIRECTION WAS " + direction + "\n");
 		if (following == true && isObstacle(leftView) == false && lastMove != 'l'){
-//			System.out.print("wtf");
 			move = 'l';
 		}
-		
-//		System.out.print("line 127 AT COORDINATE (0,4) = " + map.get(new Coordinate(0,4)));
-//		System.out.print("line 127 MAP = " + map.get(currentLocation) + "\n");
-//		System.out.print("line 128 EXPLORED = " + explored.get(currentLocation) + "\n");
 		
 		if(explored.get(currentLocation) == 1){
 			following = false;
 		}
 		
-//		System.out.print("NEXT MOVE IS " + move);
 		lastMove = move;
 		return move;
    }
@@ -146,7 +139,6 @@ public class Agent {
             int y = 2;
             for(int counter2 = 0; counter2 < 5; counter2++){
                Coordinate coord = new Coordinate(x,y);
-//               System.out.print("x = " + x + " y = " + y + '\n');
                
                // At spawned coordinate
                if(x == 0 && y == 0){            	   
@@ -156,18 +148,11 @@ public class Agent {
             	   continue;
                }
                map.put(coord, view[counter2][counter]);
-//               System.out.print("counter = " + counter + "counter 2 = " + counter2 + '\n');
-//               System.out.print("initiated map" + coord.get_x() + ","+ coord.get_y() + "put = |" + map.get(coord) + "|");
                explored.put(coord, 0);
                y--;
             }
             x++;
          }
-//         for(Coordinate coord:map.keySet()) {
-//        	   System.out.println(coord);
-//        	   System.out.println(map.get(coord));
-//         }
-//         
 
       // Update direction of character if rotated
       } else if(lastMove == 'l'){
@@ -230,6 +215,11 @@ public class Agent {
                viewCounter++;
             }
          }
+         //if current location had item then add to inventory hash
+         if(map.get(currentLocation) == 'a') inventory.put("axe", true);
+         if(map.get(currentLocation) == 'd') inventory.put("dynamite", true);
+         if(map.get(currentLocation) == 'k') inventory.put("key", true);
+         if(map.get(currentLocation) == '$') inventory.put("treasure", true);
       }
    }
 
@@ -248,30 +238,6 @@ public class Agent {
 		}
 		
 		return nextMove;
-//		if (view[1][2] == 'T' || view[1][2] == '-' || view[1][2] == '*' || view[1][2] == '~') {
-////			System.out.print(map.get(infront));	
-//			lastMove = 'r';
-//			return 'r';
-//		} else {
-//			lastMove = 'f';
-//			return 'f';
-//		}
-
-		/*
-		 * int ch=0;
-		 * 
-		 * System.out.print("Enter Action(s): ");
-		 * 
-		 * try { while ( ch != -1 ) { // read character from keyboard ch =
-		 * System.in.read();
-		 * 
-		 * switch( ch ) { // if character is a valid action, return it case 'F':
-		 * case 'L': case 'R': case 'C': case 'U': case 'B': case 'f': case 'l':
-		 * case 'r': case 'c': case 'u': case 'b': return((char) ch ); } } }
-		 * catch (IOException e) { System.out.println ("IO error:" + e ); }
-		 */
-
-		// return 0;
 	}
 
 	void print_view(char view[][]) {
@@ -285,7 +251,6 @@ public class Agent {
 					System.out.print('^');
 				} else {
 					System.out.print(view[i][j]);
-//					System.out.print("(" + i + "," + j + ")");
 				}
 			}
 			System.out.println("|");
