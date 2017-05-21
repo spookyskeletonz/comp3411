@@ -82,12 +82,63 @@ public class Agent {
 	private Coordinate currentLocation = new Coordinate(0, 0);
 	// Store character direction
 	private int direction = 1;
+	// Following a wall 
+	private boolean following = false;
 
-	public void floodFill(char view[][], Coordinate coord){
-	   
+	
+	
+	
+	private boolean isObstacle(char spaceToCheck) {
+		if (spaceToCheck == 'T' || spaceToCheck == '-' || spaceToCheck == '*' || spaceToCheck == '~'){
+			return true;
+		}
+		return false;
+		
+	}
+	
+	public char wallFollow(char view[][]){
+		char move = 'Z';
+
+		char frontView = view[1][2];
+		char backView = view[3][2];
+		char rightView = view[2][3];
+		char leftView = view[2][1];
+		
+		
+		// If any obstacle to the left, we are following
+		if (isObstacle(leftView) == true){
+//			System.out.print("following set to true");
+			following = true;
+		}
+		
+		// 
+		if (frontView == ' '){
+			move = 'f';
+		} else if (isObstacle(frontView) == true){
+			move = 'r';
+		}
+		
+//		System.out.print("line 121 LAST MOVE WAS " + lastMove + " DIRECTION WAS " + direction + "\n");
+		if (following == true && isObstacle(leftView) == false && lastMove != 'l'){
+//			System.out.print("wtf");
+			move = 'l';
+		}
+		
+//		System.out.print("line 127 AT COORDINATE (0,4) = " + map.get(new Coordinate(0,4)));
+//		System.out.print("line 127 MAP = " + map.get(currentLocation) + "\n");
+//		System.out.print("line 128 EXPLORED = " + explored.get(currentLocation) + "\n");
+		
+		if(explored.get(currentLocation) == 1){
+			following = false;
+		}
+		
+//		System.out.print("NEXT MOVE IS " + move);
+		lastMove = move;
+		return move;
    }
 
 	public void updateMapAndDirection(char view[][]) {
+
       // Start of game,  map starting view
       if(lastMove == 'Z'){
          int x = -2;
@@ -95,20 +146,17 @@ public class Agent {
             int y = 2;
             for(int counter2 = 0; counter2 < 5; counter2++){
                Coordinate coord = new Coordinate(x,y);
-               System.out.print("x = " + x + " y = " + y + '\n');
+//               System.out.print("x = " + x + " y = " + y + '\n');
                
                // At spawned coordinate
-               if(x == 0 && y == 0){
+               if(x == 0 && y == 0){            	   
             	   map.put(coord, '!');
-            	   explored.put(coord, 1);
-            	   Coordinate origin = new Coordinate(0,0);
-            	   System.out.print("AT SPAWN " + explored.get(origin));
-            	   System.out.print("on map = " + map.get(origin));
+            	   explored.put(coord, 0);
             	   y--;
             	   continue;
                }
                map.put(coord, view[counter2][counter]);
-               System.out.print("counter = " + counter + "counter 2 = " + counter2 + '\n');
+//               System.out.print("counter = " + counter + "counter 2 = " + counter2 + '\n');
 //               System.out.print("initiated map" + coord.get_x() + ","+ coord.get_y() + "put = |" + map.get(coord) + "|");
                explored.put(coord, 0);
                y--;
@@ -128,16 +176,19 @@ public class Agent {
       } else if(lastMove == 'r'){
          direction--;
          direction = direction%4;
+         if (direction < 0) direction += 4;
       // Update map if last move was to move forward
       } else if(lastMove == 'f'){
-    	 System.out.print("last move was f");
+         // Add current coordinate into explored
+         explored.put(currentLocation, 1);
          // Move East
          if(direction == 0){
-            currentLocation.set_x(currentLocation.get_x()+1);
+        	currentLocation.set_x(currentLocation.get_x()+1);
             int viewCounter = 0;
-            for(int counter = 2; counter <= -2; counter--){
+            for(int counter = 2; counter >= -2; counter--){
                Coordinate discovery = new Coordinate(currentLocation.get_x()+2, currentLocation.get_y()+counter);
-               map.put(discovery, view[viewCounter][0]);
+               map.put(discovery, view[0][viewCounter]);
+               explored.put(discovery, 0);
                System.out.print("put into map" + view[0][viewCounter]);
                viewCounter++;
             }
@@ -147,7 +198,8 @@ public class Agent {
             int viewCounter = 0;
             for(int counter = -2; counter <= 2; counter++){
                Coordinate discovery = new Coordinate(currentLocation.get_x()+counter, currentLocation.get_y()+2);
-               map.put(discovery, view[viewCounter][0]);
+               map.put(discovery, view[0][viewCounter]);
+               explored.put(discovery, 0);
                System.out.print("put into map = |" +view[0][viewCounter] + "|");
 
                viewCounter++;
@@ -156,19 +208,24 @@ public class Agent {
          } else if(direction == 2) {
             currentLocation.set_x(currentLocation.get_x()-1);
             int viewCounter = 0;
-            for(int counter = 2; counter <= -2; counter--){
+            for(int counter = -2; counter <= 2; counter++){
+//               System.out.print("WEST\n");
                Coordinate discovery = new Coordinate(currentLocation.get_x()-2, currentLocation.get_y()+counter);
-               map.put(discovery, view[viewCounter][0]);
-               System.out.print("put into map = |" +view[0][viewCounter] + "|");
+               System.out.print("DISCOVERY IS " + discovery.get_x() + "," + discovery.get_y()+ "\n");
+               System.out.print("ViewCounter = " + viewCounter + "\n");
+               map.put(discovery, view[0][viewCounter]);
+               explored.put(discovery, 0);
+               System.out.print("put into map = |" + view[0][viewCounter] + "|" + "\n");
                viewCounter++;
             }
          // Move South
          } else if(direction == 3) {
             currentLocation.set_y(currentLocation.get_y()-1);
             int viewCounter = 0;
-            for(int counter = -2; counter <= 2; counter--){
+            for(int counter = 2; counter >= -2; counter--){
                Coordinate discovery = new Coordinate(currentLocation.get_x()+counter, currentLocation.get_y()-2);
-               map.put(discovery, view[viewCounter][0]);
+               map.put(discovery, view[0][viewCounter]);
+               explored.put(discovery, 0);
                System.out.print("put into map = |" +view[0][viewCounter] + "|");
                viewCounter++;
             }
@@ -180,16 +237,25 @@ public class Agent {
 
 		// At each move update map and direction
 		updateMapAndDirection(view);
+		System.out.print("line 140 last move was " + lastMove + " current direction = " + direction + "\n");
+		System.out.print("x coordinate = " + currentLocation.get_x() + " y coordinate = " + currentLocation.get_y() + "\n");
+		System.out.print("current location = " + map.get(currentLocation));
 		print_view(view);
-		if (view[1][2] == 'T' || view[1][2] == '-' || view[1][2] == '*' || view[1][2] == '~') {
-			Coordinate infront = new Coordinate(currentLocation.get_x(), currentLocation.get_y()+1);
-//			System.out.print(map.get(infront));	
-			lastMove = 'r';
-			return 'r';
-		} else {
-			lastMove = 'f';
-			return 'f';
+		char nextMove = wallFollow(view);
+		
+		if (view[0][2] == '$'){
+			nextMove = 'f';
 		}
+		
+		return nextMove;
+//		if (view[1][2] == 'T' || view[1][2] == '-' || view[1][2] == '*' || view[1][2] == '~') {
+////			System.out.print(map.get(infront));	
+//			lastMove = 'r';
+//			return 'r';
+//		} else {
+//			lastMove = 'f';
+//			return 'f';
+//		}
 
 		/*
 		 * int ch=0;
@@ -219,7 +285,7 @@ public class Agent {
 					System.out.print('^');
 				} else {
 					System.out.print(view[i][j]);
-					System.out.print("(" + i + "," + j + ")");
+//					System.out.print("(" + i + "," + j + ")");
 				}
 			}
 			System.out.println("|");
