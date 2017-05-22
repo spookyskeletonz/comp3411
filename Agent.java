@@ -18,7 +18,8 @@ import java.util.Queue;
 class Coordinate {
 	private int x;
 	private int y;
-	private int gCost;
+	private int gCost = 0;
+	private int h2cost = 0;
 
 	public Coordinate(int x, int y) {
 		this.x = x;
@@ -72,8 +73,16 @@ class Coordinate {
 	}
 
 	public int get_fCost(Coordinate goal) {
-		int fcost = gCost; // do calculations for heuristic
+		int fcost = gCost + (abs(x - goal.get_x()) + abs(y - goal.get_y)) + h2cost;
 		return fcost;
+	}
+
+	public void set_h2cost(int h2cost) {
+		this.h2cost = h2cost;
+	}
+
+	public int get_h2cost(){
+		return h2cost;
 	}
 
 	public int get_gCost() {
