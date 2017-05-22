@@ -18,6 +18,7 @@ import java.util.Queue;
 class Coordinate {
 	private int x;
 	private int y;
+	private int gCost;
 
 	public Coordinate(int x, int y) {
 		this.x = x;
@@ -69,9 +70,20 @@ class Coordinate {
 	public void set_y(int y) {
 		this.y = y;
 	}
-	
-	
 
+	public int get_fCost(Coordinate goal) {
+		int fcost = gCost; // do calculations for heuristic
+		return fcost;
+	}
+
+	public int get_gCost() {
+		return gCost;
+	}
+
+	public void set_gCost(int gCost) {
+		this.gCost = gCost;
+	}
+	
 }
 
 public class Agent {
@@ -90,7 +102,7 @@ public class Agent {
 	private boolean following = false;
 	// Store inventory
 	private Map<String, Boolean> inventory = new HashMap<String, Boolean>();
-
+	// Maintains a queue of moves to execute
 	private Queue<Character> moveQueue = new LinkedList<Character>();
 	
 	
@@ -103,6 +115,39 @@ public class Agent {
 		
 	}
 
+	// input direction to move (N, E, S, W)
+	private void moveDirection(Coordinate start, Coordinate end) {
+		int nextDirection = 0;
+		
+		if (start.get_x() == end.get_x() - 1) {
+			nextDirection = 0;
+		} else if (start.get_x() == end.get_x() + 1) {
+			nextDirection = 2;
+		} else if (start.get_y() == end.get_y() - 1) {
+			nextDirection = 1;
+		} else if (start.get_y() == end.get_y() + 1) {
+			nextDirection = 3;
+		} else {
+			System.out.println("moveDirection: wrong input");
+			return;
+		}
+		
+		int rotates = direction - nextDirection;
+		if (rotates < 0){
+			while(rotates < 0) {
+				moveQueue.add('l');
+				rotates++;
+			}
+		} else if (rotates > 0) {
+			while (rotates > 0) {
+				moveQueue.add('r');
+				rotates--;
+			}
+		}
+		
+		moveQueue.add('f');
+	}
+	
 	// Keep wall/obstacles to the left and follow, move forward otherwise 
 	public void wallFollow(char view[][]) {
 		char move = 'Z';
@@ -237,6 +282,19 @@ public class Agent {
       }
    }
 
+	private Queue<Coordinate> aStar(Coordinate start, Coordinate goal) {
+		Queue<Coordinate> path = new LinkedList<Coordinate>();
+		Queue<Coordinate> open = new LinkedList<Coordinate>();
+		Queue<Coordinate> closed = new LinkedList<Coordinate>();
+		
+		open.add(start);
+		while (!open.isEmpty()) {
+			
+		}
+		
+		return path;
+	}
+	
 	public char get_action(char view[][]) {
 
 		// At each move update map and direction
@@ -247,15 +305,19 @@ public class Agent {
 		
 		print_view(view);
 		
-		char nextMove = wallFollow(view);
+		wallFollow(view);
 		
+		// Poll first element of move queue as next move
+		char nextMove = moveQueue.poll();
+		
+		// +++++ TEMP +++++
 		if (view[0][2] == '$'){
 			nextMove = 'f';
 		}
 		
 		// Update last move
-		lastMove = moveQueue.element();
-		return moveQueue.poll();
+		lastMove = nextMove;
+		return nextMove;
 		
 	}
 
