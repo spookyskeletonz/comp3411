@@ -20,7 +20,8 @@ import java.util.Queue;
 class Coordinate {
 	private int x;
 	private int y;
-	private int gCost;
+	private int gCost = 0;
+	private int hCost = 0;
 
 	public Coordinate(int x, int y) {
 		this.x = x;
@@ -74,8 +75,18 @@ class Coordinate {
 	}
 
 	public int get_fCost(Coordinate goal) {
-		int fcost = gCost; // do calculations for heuristic
+		int fcost = gCost + hcost;
 		return fcost;
+	}
+
+	public void set_hCost(int h2cost, Coordinate goal) {
+		this.hCost = h2cost + (abs(x - goal.get_x()) + abs(y - goal.get_y)); 
+		//our heuristic is a combination of logic based on what is at that coordinate(the value for this is calculated in the a* method)
+		//and manhattan distance
+	}
+
+	public int get_hCost(){
+		return hCost;
 	}
 
 	public int get_gCost() {
