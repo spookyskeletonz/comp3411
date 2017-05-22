@@ -19,7 +19,7 @@ class Coordinate {
 	private int x;
 	private int y;
 	private int gCost = 0;
-	private int h2cost = 0;
+	private int hCost = 0;
 
 	public Coordinate(int x, int y) {
 		this.x = x;
@@ -73,16 +73,18 @@ class Coordinate {
 	}
 
 	public int get_fCost(Coordinate goal) {
-		int fcost = gCost + (abs(x - goal.get_x()) + abs(y - goal.get_y)) + h2cost;
+		int fcost = gCost + hcost;
 		return fcost;
 	}
 
-	public void set_h2cost(int h2cost) {
-		this.h2cost = h2cost;
+	public void set_hCost(int h2cost, Coordinate goal) {
+		this.hCost = h2cost + (abs(x - goal.get_x()) + abs(y - goal.get_y)); 
+		//our heuristic is a combination of logic based on what is at that coordinate(the value for this is calculated in the a* method)
+		//and manhattan distance
 	}
 
-	public int get_h2cost(){
-		return h2cost;
+	public int get_hCost(){
+		return hCost;
 	}
 
 	public int get_gCost() {
