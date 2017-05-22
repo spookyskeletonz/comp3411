@@ -9,9 +9,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.Queue;
 
 // Coordinate system for map
@@ -281,19 +283,36 @@ public class Agent {
          if(map.get(currentLocation) == '$') inventory.put("treasure", true);
       }
    }
+	
+	private class coordinateComparator implements Comparator<Coordinate> {
+		
+		@Override
+		public int compare(Coordinate a, Coordinate b) {
+			if (a.get_fCost() < b.get_fCost()) {
+				return 1;
+			} else if (a.get_fCost() > b.get_fCost()) {
+				return -1;
+			}
+			return 0;
+		}
+	}
 
 	private Queue<Coordinate> aStar(Coordinate start, Coordinate goal) {
 		Queue<Coordinate> path = new LinkedList<Coordinate>();
-		Queue<Coordinate> open = new LinkedList<Coordinate>();
-		Queue<Coordinate> closed = new LinkedList<Coordinate>();
+		Comparator<Coordinate> coordinateComparator = new coordinateComparator();
+		PriorityQueue<Coordinate> open = new PriorityQueue<Coordinate>();
+		PriorityQueue<Coordinate> closed = new PriorityQueue<Coordinate>();
 		
 		open.add(start);
 		while (!open.isEmpty()) {
+			// When pulling adjacent coordinates, ensure that the coordinate to be expanded is contained in map
 			
 		}
 		
 		return path;
 	}
+	
+	// ========================================================================
 	
 	public char get_action(char view[][]) {
 
