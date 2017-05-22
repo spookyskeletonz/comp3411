@@ -5,9 +5,12 @@
  *  UNSW Session 1, 2017
 */
 
-import java.util.*;
-import java.io.*;
-import java.net.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
 
 // Coordinate system for map
 class Coordinate {
@@ -73,7 +76,7 @@ public class Agent {
 
 	// Create map
 	private Map<Coordinate, Character> map = new HashMap<Coordinate, Character>();
-	// 
+	// Map of explored coordinates, 0 for unexplored 1 for explored
 	private Map<Coordinate, Integer> explored = new HashMap<Coordinate, Integer>();
 	// Store last move
 	private char lastMove = 'Z';
@@ -83,12 +86,12 @@ public class Agent {
 	private int direction = 1;
 	// Following a wall 
 	private boolean following = false;
-   // Store inventory
-   private Map<String, Boolean> inventory = new HashMap<String, Boolean>();
+	// Store inventory
+	private Map<String, Boolean> inventory = new HashMap<String, Boolean>();
 
 	
 	
-	
+	// Checks if a provided character is an obstacle
 	private boolean isObstacle(char spaceToCheck) {
 		if (spaceToCheck == 'T' || spaceToCheck == '-' || spaceToCheck == '*' || spaceToCheck == '~'){
 			return true;
@@ -96,7 +99,8 @@ public class Agent {
 		return false;
 		
 	}
-	
+
+	// Keep wall/obstacles to the left and follow, move forward otherwise 
 	public char wallFollow(char view[][]){
 		char move = 'Z';
 
@@ -111,22 +115,25 @@ public class Agent {
 			following = true;
 		}
 		
-		// 
-		if (isObstacle(frontView)){
+		// If no obstacles in front then move forward or rotate right if obstacle directly ahead
+		if (isObstacle(frontView) && !following) {
+			move = 'r';
+		} else if (isObstacle(frontView) && following) {
 			move = 'r';
 		} else {
          move = 'f';
-      }
+		}
 		
+		// If previously following a wall, turn to ensure we keep it on the left
 		if (following == true && isObstacle(leftView) == false && lastMove != 'l'){
 			move = 'l';
 		}
-		
-		if(explored.get(currentLocation) == 1){
+		// Prevents following infinitely along an obstacle
+		if (explored.get(currentLocation) > 2) {
 			following = false;
 		}
 		
-		lastMove = move;
+
 		return move;
    }
 
@@ -165,7 +172,8 @@ public class Agent {
       // Update map if last move was to move forward
       } else if(lastMove == 'f'){
          // Add current coordinate into explored
-         explored.put(currentLocation, 1);
+			explored.put(currentLocation, (explored.get(currentLocation)) + 1);
+			
          // Move East
          if(direction == 0){
         	currentLocation.set_x(currentLocation.get_x()+1);
@@ -179,40 +187,40 @@ public class Agent {
             }
          // Move North
          } else if(direction == 1){
-            currentLocation.set_y(currentLocation.get_y()+1);
-            int viewCounter = 0;
-            for(int counter = -2; counter <= 2; counter++){
-               Coordinate discovery = new Coordinate(currentLocation.get_x()+counter, currentLocation.get_y()+2);
-               map.put(discovery, view[0][viewCounter]);
-               explored.put(discovery, 0);
-               System.out.print("put into map = |" +view[0][viewCounter] + "|");
+        	 currentLocation.set_y(currentLocation.get_y()+1);
+        	 int viewCounter = 0;
+        	 for(int counter = -2; counter <= 2; counter++){
+        		 Coordinate discovery = new Coordinate(currentLocation.get_x()+counter, currentLocation.get_y()+2);
+        		 map.put(discovery, view[0][viewCounter]);
+        		 explored.put(discovery, 0);
+        		 System.out.print("put into map = |" +view[0][viewCounter] + "|");
 
                viewCounter++;
             }
          // Move West
          } else if(direction == 2) {
-            currentLocation.set_x(currentLocation.get_x()-1);
-            int viewCounter = 0;
-            for(int counter = -2; counter <= 2; counter++){
-//               System.out.print("WEST\n");
-               Coordinate discovery = new Coordinate(currentLocation.get_x()-2, currentLocation.get_y()+counter);
-               System.out.print("DISCOVERY IS " + discovery.get_x() + "," + discovery.get_y()+ "\n");
-               System.out.print("ViewCounter = " + viewCounter + "\n");
-               map.put(discovery, view[0][viewCounter]);
-               explored.put(discovery, 0);
-               System.out.print("put into map = |" + view[0][viewCounter] + "|" + "\n");
-               viewCounter++;
+        	 currentLocation.set_x(currentLocation.get_x()-1);
+        	 int viewCounter = 0;
+        	 for(int counter = -2; counter <= 2; counter++){
+					// System.out.print("WEST\n");
+        		 Coordinate discovery = new Coordinate(currentLocation.get_x()-2, currentLocation.get_y()+counter);
+        		 System.out.print("DISCOVERY IS " + discovery.get_x() + "," + discovery.get_y()+ "\n");
+        		 System.out.print("ViewCounter = " + viewCounter + "\n");
+        		 map.put(discovery, view[0][viewCounter]);
+        		 explored.put(discovery, 0);
+        		 System.out.print("put into map = |" + view[0][viewCounter] + "|" + "\n");
+        		 viewCounter++;
             }
          // Move South
          } else if(direction == 3) {
-            currentLocation.set_y(currentLocation.get_y()-1);
-            int viewCounter = 0;
-            for(int counter = 2; counter >= -2; counter--){
-               Coordinate discovery = new Coordinate(currentLocation.get_x()+counter, currentLocation.get_y()-2);
-               map.put(discovery, view[0][viewCounter]);
-               explored.put(discovery, 0);
-               System.out.print("put into map = |" +view[0][viewCounter] + "|");
-               viewCounter++;
+        	 currentLocation.set_y(currentLocation.get_y()-1);
+        	 int viewCounter = 0;
+        	 for(int counter = 2; counter >= -2; counter--){
+        		 Coordinate discovery = new Coordinate(currentLocation.get_x()+counter, currentLocation.get_y()-2);
+        		 map.put(discovery, view[0][viewCounter]);
+        		 explored.put(discovery, 0);
+        		 System.out.print("put into map = |" +view[0][viewCounter] + "|");
+        		 viewCounter++;
             }
          }
          //if current location had item then add to inventory hash
@@ -237,9 +245,15 @@ public class Agent {
 			nextMove = 'f';
 		}
 		
+		// Update last move
+		lastMove = nextMove;
 		return nextMove;
+		
 	}
 
+
+// ==================================================================================================================================================
+	
 	void print_view(char view[][]) {
 		int i, j;
 
