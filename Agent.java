@@ -16,6 +16,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Queue;
+import java.util.Stack;
 
 // Coordinate system for map
 class Coordinate {
@@ -23,6 +24,7 @@ class Coordinate {
 	private int y;
 	private int gCost = 0;
 	private int hCost = 0;
+	private Coordinate prevCoord;
 
 	public Coordinate(int x, int y) {
 		this.x = x;
@@ -40,11 +42,11 @@ class Coordinate {
 		
 		final Coordinate coordinate = (Coordinate) o;
 		
-		if (x != coordinate.x){
+		if (this.x != coordinate.get_x()) {
 			return false;
 		}
 		
-		if (y != coordinate.y){
+		if (this.y != coordinate.get_y()) {
 			return false;
 		}
 		
@@ -98,6 +100,13 @@ class Coordinate {
 		this.gCost = gCost;
 	}
 	
+	public Coordinate get_prevCoord(){
+		return prevCoord;
+	}
+	
+	public void set_prevCoord(Coordinate prevCoord) {
+		this.prevCoord = prevCoord;
+	}
 }
 
 public class Agent {
@@ -301,9 +310,9 @@ public class Agent {
 		@Override
 		public int compare(Coordinate a, Coordinate b) {
 			if (a.get_fCost() < b.get_fCost()) {
-				return 1;
-			} else if (a.get_fCost() > b.get_fCost()) {
 				return -1;
+			} else if (a.get_fCost() > b.get_fCost()) {
+				return 1;
 			}
 			return 0;
 		}
@@ -343,11 +352,11 @@ public class Agent {
 	}
 
 	// A* Search for path-finding between two coordinates
-	public Queue<Coordinate> aStar(Coordinate start, Coordinate goal) {
-		Queue<Coordinate> path = new LinkedList<Coordinate>();
+	public Stack<Coordinate> aStar(Coordinate start, Coordinate goal) {
+		Stack<Coordinate> path = new Stack<Coordinate>();
 		Comparator<Coordinate> coordComparator = new coordinateComparator();
 		PriorityQueue<Coordinate> open = new PriorityQueue<Coordinate>(100, coordComparator);
-		PriorityQueue<Coordinate> closed = new PriorityQueue<Coordinate>(100, coordComparator);
+		ArrayList<Coordinate> closed = new ArrayList<Coordinate>();
 		// Heuristic cost of a coordinate based on what value the coordinate holds
 		int h2Cost = 0;
 		// Set fCost for start
@@ -355,12 +364,21 @@ public class Agent {
 		
 		while (!open.isEmpty()) {
 			Coordinate currCoord = open.poll();
-			System.out.print("processing coordinate (" + currCoord.get_x() + "," + currCoord.get_y() + ")\n\n");
+			// DEBUG // System.out.print(
+			// "processing coordinate (" + currCoord.get_x() + "," + currCoord.get_y() + ")" + " fCost = " + currCoord.get_fCost()
+			// + "\n\n");
+			//
 			// If current coordinate is goal, we have completed search
 			if (currCoord.equals(goal)) {
-				path.add(currCoord);
-				return path;
+				path.push(goal);
+				while (!currCoord.get_prevCoord().equals(start)) {
+					path.push(currCoord.get_prevCoord());
+					currCoord = currCoord.get_prevCoord();
+					// DEBUG // System.out.print("GOAL (" + currCoord.get_x() + "," + currCoord.get_y() + ")" + " prev = "
+					// + currCoord.get_prevCoord().get_x() + "," + currCoord.get_prevCoord().get_y() + "\n\n");
+				}
 			}
+			
 			ArrayList<Coordinate> adjacentCoords = getAdjacent(currCoord);
 			
 			closed.add(currCoord);
@@ -368,21 +386,29 @@ public class Agent {
 
 				// All path movements are of "cost" 1, gCost of a coordinate is gCost of previous coordinate + 1
 				nextCoord.set_gCost(currCoord.get_gCost() + 1);
+				h2Cost = calculateH2Cost(nextCoord);
+				nextCoord.set_hCost(h2Cost, goal);
+				nextCoord.set_prevCoord(currCoord);
 				// If closed set contains adjacent coordinate move onto next coordinate
 				if (closed.contains(nextCoord)) {
 					continue;
 				}
+				// System.out
+				// .print("next coord (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + " fCost = " + nextCoord.get_fCost() + "\n\n");
+				
 				// If open set does not contain adjacent coordinate,
 				if (!open.contains(nextCoord)) {
 					open.add(nextCoord);
 				}
 				// Calculate heuristic costs
-				h2Cost = calculateH2Cost(nextCoord);
 				// Set heuristic cost of coordinate
-				nextCoord.set_hCost(h2Cost, goal);
-				path.add(currCoord);
+				
+				// DEBUG // System.out.print("NEXT ELEMENT IN OPEN IS " + open.element().get_x() + "," + open.element().get_y());
+				// DEBUG //System.out.print(" with fCost = " + open.element().get_fCost() + "\n");
+				// DEBUG // System.out.print("prev = " + nextCoord.get_prevCoord().get_x() + "," + nextCoord.get_prevCoord().get_y() + "\n\n");
+				
 			}
-			
+
 			// When pulling adjacent coordinates, ensure that the coordinate to be expanded is contained in map
 			
 		}
@@ -393,6 +419,8 @@ public class Agent {
 	// ========================================================================
 	
 	public char get_action(char view[][]) {
+
+
 
 		// At each move update map and direction
 		updateMapAndDirection(view);
@@ -408,17 +436,17 @@ public class Agent {
 		char nextMove = moveQueue.poll();
 		
 		// +++++ TEMP +++++
-		if (view[0][2] == '$'){
+		if (view[1][2] == '$') {
 			nextMove = 'f';
 		}
-		
-		if (inventory.containsKey("treasure") && inventory.get("treasure")) {
+		Stack<Coordinate> returnPath;
+		if (inventory.containsKey("treasure") && inventory.get("treasure") && !returnPath.empty()) {
 			// Coordinate tempCoord = new Coordinate()
-			System.out.print("I HAVE THE TREASURE \n\n");
-			Queue<Coordinate> path = aStar(currentLocation, new Coordinate(0, 0));
-			while (!path.isEmpty()) {
-				Coordinate nextCoord = path.poll();
-				System.out.print("Path back (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + '\n');
+			// DEBUG //System.out.print("I HAVE THE TREASURE \n\n");
+			returnPath = aStar(currentLocation, new Coordinate(0, 0));
+			while (!returnPath.empty()) {
+				Coordinate nextCoord = returnPath.pop();
+				// DEBUG //System.out.print("Path back (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + '\n');
 			}
 			return nextMove = ' ';
 		}
