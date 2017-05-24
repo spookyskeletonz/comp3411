@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -80,7 +81,7 @@ class Coordinate {
 	}
 
 	public void set_hCost(int h2cost, Coordinate goal) {
-		this.hCost = h2cost + (abs(x - goal.get_x()) + abs(y - goal.get_y()));
+		this.hCost = h2cost + (Math.abs(x - goal.get_x()) + Math.abs(y - goal.get_y()));
 		//our heuristic is a combination of logic based on what is at that coordinate(the value for this is calculated in the a* method)
 		//and manhattan distance
 	}
@@ -295,7 +296,7 @@ public class Agent {
       }
    }
 	
-	private class coordinateComparator implements Comparator<Coordinate> {
+	public class coordinateComparator implements Comparator<Coordinate> {
 		
 		@Override
 		public int compare(Coordinate a, Coordinate b) {
@@ -307,17 +308,83 @@ public class Agent {
 			return 0;
 		}
 	}
-
-	private Queue<Coordinate> aStar(Coordinate start, Coordinate goal) {
-		Queue<Coordinate> path = new LinkedList<Coordinate>();
-		Comparator<Coordinate> coordinateComparator = new coordinateComparator();
-		PriorityQueue<Coordinate> open = new PriorityQueue<Coordinate>();
-		PriorityQueue<Coordinate> closed = new PriorityQueue<Coordinate>();
+	
+	// Gets all documented adjacent coordinates for a given coordinate
+	private ArrayList<Coordinate> getAdjacent(Coordinate currCoord) {
+		ArrayList<Coordinate> adjacentCoords = new ArrayList<Coordinate>();
+		Coordinate adjNorth = new Coordinate(currCoord.get_x(), currCoord.get_y() + 1);
+		Coordinate adjEast = new Coordinate(currCoord.get_x() + 1, currCoord.get_y());
+		Coordinate adjSouth = new Coordinate(currCoord.get_x(), currCoord.get_y() - 1);
+		Coordinate adjWest = new Coordinate(currCoord.get_x() - 1, currCoord.get_y());
 		
+		if (map.containsKey(adjNorth)) {
+			adjacentCoords.add(adjNorth);
+		}
+		if (map.containsKey(adjEast)) {
+			adjacentCoords.add(adjEast);
+		}
+		if (map.containsKey(adjSouth)) {
+			adjacentCoords.add(adjSouth);
+		}
+		if (map.containsKey(adjWest)) {
+			adjacentCoords.add(adjWest);
+		}
+		
+		return adjacentCoords;
+	}
+	
+	// Calculate heuristic cost for a give coordinate
+	private int calculateH2Cost(Coordinate coord) {
+		int h2Cost = 0;
+		char mapValue = map.get(coord);
+		// ADD h2Cost CALCULATION
+		
+		return h2Cost;
+	}
+
+	// A* Search for path-finding between two coordinates
+	public Queue<Coordinate> aStar(Coordinate start, Coordinate goal) {
+		Queue<Coordinate> path = new LinkedList<Coordinate>();
+		Comparator<Coordinate> coordComparator = new coordinateComparator();
+		PriorityQueue<Coordinate> open = new PriorityQueue<Coordinate>(100, coordComparator);
+		PriorityQueue<Coordinate> closed = new PriorityQueue<Coordinate>(100, coordComparator);
+		// Heuristic cost of a coordinate based on what value the coordinate holds
+		int h2Cost = 0;
 		start.set_gCost(0);
 		start.set_hCost(0, goal);
+		// Set fCost for start
 		open.add(start);
+		
 		while (!open.isEmpty()) {
+			Coordinate currCoord = open.poll();
+			System.out.print("processing coordinate (" + currCoord.get_x() + "," + currCoord.get_y() + ")\n\n");
+			// If current coordinate is goal, we have completed search
+			if (currCoord.equals(goal)) {
+				path.add(currCoord);
+				return path;
+			}
+			ArrayList<Coordinate> adjacentCoords = getAdjacent(currCoord);
+			
+			closed.add(currCoord);
+			for (Coordinate nextCoord : adjacentCoords) {
+
+				// All path movements are of "cost" 1, gCost of a coordinate is gCost of previous coordinate + 1
+				nextCoord.set_gCost(currCoord.get_gCost() + 1);
+				// If closed set contains adjacent coordinate move onto next coordinate
+				if (closed.contains(nextCoord)) {
+					continue;
+				}
+				// If open set does not contain adjacent coordinate,
+				if (!open.contains(nextCoord)) {
+					open.add(nextCoord);
+				}
+				// Calculate heuristic costs
+				h2Cost = calculateH2Cost(nextCoord);
+				// Set heuristic cost of coordinate
+				nextCoord.set_hCost(h2Cost, goal);
+				path.add(currCoord);
+			}
+			
 			// When pulling adjacent coordinates, ensure that the coordinate to be expanded is contained in map
 			/* heuristic logic. add where relevant(i.e before adding coordinate to open queue)
 			h2cost = 0;
@@ -361,6 +428,18 @@ public class Agent {
 			nextMove = 'f';
 		}
 		
+		if (inventory.containsKey("treasure") && inventory.get("treasure")) {
+			// Coordinate tempCoord = new Coordinate()
+			System.out.print("I HAVE THE TREASURE \n\n");
+			Queue<Coordinate> path = aStar(currentLocation, new Coordinate(0, 0));
+			while (!path.isEmpty()) {
+				Coordinate nextCoord = path.poll();
+				System.out.print("Path back (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + '\n');
+			}
+			return nextMove = ' ';
+		}
+		
+
 		// Update last move
 		lastMove = nextMove;
 		return nextMove;
