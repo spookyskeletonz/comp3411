@@ -350,6 +350,8 @@ public class Agent {
 		PriorityQueue<Coordinate> closed = new PriorityQueue<Coordinate>(100, coordComparator);
 		// Heuristic cost of a coordinate based on what value the coordinate holds
 		int h2Cost = 0;
+		start.set_gCost(0);
+		start.set_hCost(0, goal);
 		// Set fCost for start
 		open.add(start);
 		
@@ -384,6 +386,20 @@ public class Agent {
 			}
 			
 			// When pulling adjacent coordinates, ensure that the coordinate to be expanded is contained in map
+			/* heuristic logic. add where relevant(i.e before adding coordinate to open queue)
+			h2cost = 0;
+			if(map.get(current) == '.'){
+				h2cost = 1000;
+			} else if (map.get(current) == '~' && inventory.get("raft") == false || map.get(current) == '~' && !inventory.has("raft")){
+				h2cost = 1000;
+			} else if (map.get(current) == 'T' && inventory.get("axe") == false || map.get(current) == 'T' && !inventory.has("axe")){
+				h2cost = 1000;
+			} else if (map.get(current) == '*' && inventory.get("dynamite") == false || map.get(current) == '*' && !inventory.has("dynamite")){
+				h2cost = 1000;
+			}
+			current.set_gCost(prev.get_gCost() + 1);
+			current.set_hCost(h2cost, goal);
+			*/
 			
 		}
 		
