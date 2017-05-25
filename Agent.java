@@ -331,10 +331,10 @@ public class Agent {
          if(map.get(currentLocation) == 'k') inventory.put("key", true);
          if(map.get(currentLocation) == '$') inventory.put("treasure", true);
          if(foundItem == true){
-         	Queue<Coordinate> makeMovesToItem = aStar(currentLocation, itemCoord);
-         	Coordinate currentMove = makeMovesToItem.poll();
+				Stack<Coordinate> makeMovesToItem = aStar(currentLocation, itemCoord);
+				Coordinate currentMove = makeMovesToItem.pop();
          	while(!makeMovesToItem.isEmpty()){
-         		Coordinate nextMove = makeMovesToItem.poll();
+					Coordinate nextMove = makeMovesToItem.pop();
          		moveDirection(currentMove, nextMove);
          		currentMove = nextMove;
          	}
@@ -387,9 +387,9 @@ public class Agent {
 			h2cost = 6500;
 		} else if (map.get(current) == 'T' && inventory.get("axe") == false || map.get(current) == 'T' && !inventory.containsKey("axe")) {
 			h2cost = 6500;
-		} else if (map.get(current) == '*' && inventory.get("dynamite") == false
-				|| map.get(current) == '*' && !inventory.containsKey("dynamite")) {
-			h2cost = 6500;
+			// } else if (map.get(current) == '*' && inventory.get("dynamite") == false
+			// || map.get(current) == '*' && !inventory.containsKey("dynamite")) {
+			// h2cost = 6500;
 		} else if (map.get(current) == '-' && inventory.get("key") == false || map.get(current) == '-' && !inventory.containsKey("key")) {
 			h2cost = 6500;
 		}
@@ -411,9 +411,9 @@ public class Agent {
 		
 		while (!open.isEmpty()) {
 			Coordinate currCoord = open.poll();
-			// DEBUG // System.out.print(
-			// "processing coordinate (" + currCoord.get_x() + "," + currCoord.get_y() + ")" + " fCost = " + currCoord.get_fCost()
-			// + "\n\n");
+			// DEBUG
+			System.out.print("processing coordinate (" + currCoord.get_x() + "," + currCoord.get_y() + ")" + " fCost = "
+					+ currCoord.get_fCost() + "\n\n");
 			//
 			// If current coordinate is goal, we have completed search
 			if (currCoord.equals(goal)) {
@@ -421,8 +421,9 @@ public class Agent {
 				while (!currCoord.get_prevCoord().equals(start)) {
 					path.push(currCoord.get_prevCoord());
 					currCoord = currCoord.get_prevCoord();
-					// DEBUG // System.out.print("GOAL (" + currCoord.get_x() + "," + currCoord.get_y() + ")" + " prev = "
-					// + currCoord.get_prevCoord().get_x() + "," + currCoord.get_prevCoord().get_y() + "\n\n");
+					// DEBUG
+					System.out.print("GOAL (" + currCoord.get_x() + "," + currCoord.get_y() + ")" + " prev = "
+							+ currCoord.get_prevCoord().get_x() + "," + currCoord.get_prevCoord().get_y() + "\n\n");
 				}
 			}
 			
@@ -450,9 +451,12 @@ public class Agent {
 				// Calculate heuristic costs
 				// Set heuristic cost of coordinate
 				
-				// DEBUG // System.out.print("NEXT ELEMENT IN OPEN IS " + open.element().get_x() + "," + open.element().get_y());
-				// DEBUG //System.out.print(" with fCost = " + open.element().get_fCost() + "\n");
-				// DEBUG // System.out.print("prev = " + nextCoord.get_prevCoord().get_x() + "," + nextCoord.get_prevCoord().get_y() + "\n\n");
+				// DEBUG
+				// System.out.print("NEXT ELEMENT IN OPEN IS " + open.element().get_x() + "," + open.element().get_y());
+				// DEBUG
+				// System.out.print(" with fCost = " + open.element().get_fCost() + "\n");
+				// DEBUG
+				// System.out.print("prev = " + nextCoord.get_prevCoord().get_x() + "," + nextCoord.get_prevCoord().get_y() + "\n\n");
 				
 			}
 
@@ -485,13 +489,14 @@ public class Agent {
 			nextMove = 'f';
 		}
 		Stack<Coordinate> returnPath;
-		if (inventory.containsKey("treasure") && inventory.get("treasure") && !returnPath.empty()) {
+		if (inventory.containsKey("treasure") && inventory.get("treasure")) {
 			// Coordinate tempCoord = new Coordinate()
 			// DEBUG //System.out.print("I HAVE THE TREASURE \n\n");
 			returnPath = aStar(currentLocation, new Coordinate(0, 0));
 			while (!returnPath.empty()) {
 				Coordinate nextCoord = returnPath.pop();
-				// DEBUG //System.out.print("Path back (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + '\n');
+				// DEBUG
+				System.out.print("Path back (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + '\n');
 			}
 			return nextMove = ' ';
 		}
