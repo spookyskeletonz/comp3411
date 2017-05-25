@@ -156,6 +156,7 @@ public class Agent {
 		}
 		
 		int rotates = direction - nextDirection;
+		//rotate to face right direction
 		if (rotates < 0){
 			while(rotates < 0) {
 				moveQueue.add('l');
@@ -168,7 +169,6 @@ public class Agent {
 			}
 		}
 		
-		moveQueue.add('f');
 	}
 	
 	// Keep wall/obstacles to the left and follow, move forward otherwise 
