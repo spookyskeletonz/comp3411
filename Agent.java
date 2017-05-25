@@ -138,7 +138,7 @@ public class Agent {
 		
 	}
 
-	// input direction to move (N, E, S, W)
+	// input 2 adjacent coordinates and this function will queue up the required moves to move there
 	private void moveDirection(Coordinate start, Coordinate end) {
 		int nextDirection = 0;
 		
@@ -210,6 +210,10 @@ public class Agent {
 
 	public void updateMapAndDirection(char view[][]) {
 
+		//flag and coord for if an item appears in the 5x5
+		Boolean foundItem = false;
+		Coordinate itemCoord = new Coordinate(-90, -90);
+
       // Start of game,  map starting view
       if(lastMove == 'Z'){
          int x = -2;
@@ -228,6 +232,11 @@ public class Agent {
 					// Otherwise insert view's value
                map.put(coord, view[counter2][counter]);
                explored.put(coord, 0);
+					// if item appears trigger flag and store coord
+             	if(view[counter2][counter] == 'a' || view[counter2][counter] == 'k' || view[counter2][counter] == 'd' || view[counter2][counter] == '$'){
+             		foundItem = true;
+             		itemCoord = coord;
+             	}
                y--;
             }
             x++;
@@ -253,9 +262,15 @@ public class Agent {
 				int viewCounter = 0;
 				for (int counter = 2; counter >= -2; counter--) {
 					Coordinate discovery = new Coordinate(currentLocation.get_x() + 2, currentLocation.get_y() + counter);
-					map.put(discovery, view[0][viewCounter]);
+					char discoveredChar = view[0][viewCounter];
+					map.put(discovery, discoveredChar);
 					explored.put(discovery, 0);
-					System.out.print("put into map" + view[0][viewCounter]);
+					//if item apears trigger flag and store coord
+             	if(discoveredChar == 'a' || discoveredChar == 'k' || discoveredChar == 'd' || discoveredChar == '$'){
+             		foundItem = true;
+             		itemCoord = discovery;
+             	}
+					System.out.print("put into map" + discoveredChar);
 					viewCounter++;
 				}
          // Move North
@@ -264,10 +279,14 @@ public class Agent {
 				int viewCounter = 0;
 				for (int counter = -2; counter <= 2; counter++) {
 					Coordinate discovery = new Coordinate(currentLocation.get_x() + counter, currentLocation.get_y() + 2);
-					map.put(discovery, view[0][viewCounter]);
+					char discoveredChar = view[0][viewCounter];
+					map.put(discovery, discoveredChar);
 					explored.put(discovery, 0);
-					System.out.print("put into map = |" + view[0][viewCounter] + "|");
-
+					if(discoveredChar == 'a' || discoveredChar == 'k' || discoveredChar == 'd' || discoveredChar == '$'){
+             		foundItem = true;
+             		itemCoord = discovery;
+             	}
+					System.out.print("put into map = |" + discoveredChar + "|");
                viewCounter++;
             }
          // Move West
@@ -279,10 +298,14 @@ public class Agent {
 					
 					System.out.print("DISCOVERY IS " + discovery.get_x() + "," + discovery.get_y() + "\n");
 					System.out.print("ViewCounter = " + viewCounter + "\n");
-					
-					map.put(discovery, view[0][viewCounter]);
+					char discoveredChar = view[0][viewCounter];
+					map.put(discovery, discoveredChar);
 					explored.put(discovery, 0);
-					System.out.print("put into map = |" + view[0][viewCounter] + "|" + "\n");
+					if(discoveredChar == 'a' || discoveredChar == 'k' || discoveredChar == 'd' || discoveredChar == '$'){
+             		foundItem = true;
+             		itemCoord = discovery;
+             	}
+					System.out.print("put into map = |" + discoveredChar + "|" + "\n");
 					viewCounter++;
             }
          // Move South
@@ -291,9 +314,14 @@ public class Agent {
         	 int viewCounter = 0;
         	 for(int counter = 2; counter >= -2; counter--){
         		 Coordinate discovery = new Coordinate(currentLocation.get_x()+counter, currentLocation.get_y()-2);
-        		 map.put(discovery, view[0][viewCounter]);
+        		 char discoveredChar = view[0][viewCounter];
+        		 map.put(discovery, discoveredChar);
         		 explored.put(discovery, 0);
-        		 System.out.print("put into map = |" +view[0][viewCounter] + "|");
+        		 if(discoveredChar == 'a' || discoveredChar == 'k' || discoveredChar == 'd' || discoveredChar == '$'){
+             		foundItem = true;
+             		itemCoord = discovery;
+             	}
+        		 System.out.print("put into map = |" +discoveredChar + "|");
         		 viewCounter++;
             }
          }
@@ -302,6 +330,15 @@ public class Agent {
          if(map.get(currentLocation) == 'd') inventory.put("dynamite", true);
          if(map.get(currentLocation) == 'k') inventory.put("key", true);
          if(map.get(currentLocation) == '$') inventory.put("treasure", true);
+         if(foundItem == true){
+         	Queue<Coordinate> makeMovesToItem = aStar(currentLocation, itemCoord);
+         	Coordinate currentMove = makeMovesToItem.poll();
+         	while(!makeMovesToItem.isEmpty()){
+         		Coordinate nextMove = makeMovesToItem.poll();
+         		moveDirection(currentMove, nextMove);
+         		currentMove = nextMove;
+         	}
+         }
       }
    }
 	
@@ -342,15 +379,23 @@ public class Agent {
 		return adjacentCoords;
 	}
 	
-	// Calculate heuristic cost for a give coordinate
-	private int calculateH2Cost(Coordinate coord) {
-		int h2Cost = 0;
-		char mapValue = map.get(coord);
-		// ADD h2Cost CALCULATION
-		
-		return h2Cost;
+	public int calculateH2Cost(Coordinate current) {
+		int h2cost = 0;
+		if (map.get(current) == '.') {
+			h2cost = 100000;
+		} else if (map.get(current) == '~' && inventory.get("raft") == false || map.get(current) == '~' && !inventory.containsKey("raft")) {
+			h2cost = 6500;
+		} else if (map.get(current) == 'T' && inventory.get("axe") == false || map.get(current) == 'T' && !inventory.containsKey("axe")) {
+			h2cost = 6500;
+		} else if (map.get(current) == '*' && inventory.get("dynamite") == false
+				|| map.get(current) == '*' && !inventory.containsKey("dynamite")) {
+			h2cost = 6500;
+		} else if (map.get(current) == '-' && inventory.get("key") == false || map.get(current) == '-' && !inventory.containsKey("key")) {
+			h2cost = 6500;
+		}
+		return h2cost;
 	}
-
+	
 	// A* Search for path-finding between two coordinates
 	public Stack<Coordinate> aStar(Coordinate start, Coordinate goal) {
 		Stack<Coordinate> path = new Stack<Coordinate>();
@@ -359,6 +404,8 @@ public class Agent {
 		ArrayList<Coordinate> closed = new ArrayList<Coordinate>();
 		// Heuristic cost of a coordinate based on what value the coordinate holds
 		int h2Cost = 0;
+		start.set_gCost(0);
+		start.set_hCost(0, goal);
 		// Set fCost for start
 		open.add(start);
 		
@@ -415,9 +462,7 @@ public class Agent {
 		
 		return path;
 	}
-	
-	// ========================================================================
-	
+
 	public char get_action(char view[][]) {
 
 
