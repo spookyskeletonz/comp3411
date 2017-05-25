@@ -156,6 +156,7 @@ public class Agent {
 		}
 		
 		int rotates = direction - nextDirection;
+		//rotate to face right direction
 		if (rotates < 0){
 			while(rotates < 0) {
 				moveQueue.add('l');
@@ -167,7 +168,18 @@ public class Agent {
 				rotates--;
 			}
 		}
-		
+		//if item use is needed, queue up its use and flag it as false in hashmap
+		if (map.get(end) == '-' && inventory.get("key") == true){
+			moveQueue.add('u');
+			inventory.put("key", false);
+		} else if (map.get(end) == 'T' && inventory.get("axe") == true){
+			moveQueue.add('c');
+			inventory.put("axe", false);
+		} else if (map.get(end) == '*' && inventory.get("dynamite") == true){
+			moveQueue.add('b');
+			inventory.put("dynamite", false);
+		}
+
 		moveQueue.add('f');
 	}
 	
