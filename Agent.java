@@ -124,9 +124,16 @@ public class Agent {
 	// Following a wall 
 	private boolean following = false;
 	// Store inventory
-	private Map<String, Boolean> inventory = new HashMap<String, Boolean>();
+	private Map<String, Integer> inventory = new HashMap<String, Integer>();
 	// Maintains a queue of moves to execute
 	private Queue<Character> moveQueue = new LinkedList<Character>();
+	// Queue of moves to pick up an item
+	private Queue<Character> itemMoveQueue = new LinkedList<Character>();
+	
+	// Indicator for if the agent has seen an item on its' adventure
+	Boolean foundItem = false;
+	// flag and coord for if an item appears in the 5x5
+	Coordinate itemCoord = new Coordinate(-90, -90);
 	
 	
 	// Checks if a provided character is an obstacle
@@ -139,7 +146,7 @@ public class Agent {
 	}
 
 	// input 2 adjacent coordinates and this function will queue up the required moves to move there
-	private void moveDirection(Coordinate start, Coordinate end) {
+	private void moveDirection(Coordinate start, Coordinate end, Queue<Character> moveQueue) {
 		int nextDirection = 0;
 		
 		// Change player direction to face goal location
@@ -160,6 +167,7 @@ public class Agent {
 		//rotate to face right direction
 		if (rotates < 0){
 			while(rotates < 0) {
+				System.out.print("ERROR HERE?\n");
 				moveQueue.add('l');
 				rotates++;
 			}
@@ -170,15 +178,16 @@ public class Agent {
 			}
 		}
 		//if item use is needed, queue up its use and flag it as false in hashmap
-		if (map.get(end) == '-' && inventory.get("key") == true){
+		if (map.get(end) == '-' && inventory.get("key") == 1){
 			moveQueue.add('u');
-			inventory.put("key", false);
-		} else if (map.get(end) == 'T' && inventory.get("axe") == true){
+			inventory.put("key", 0);
+		} else if (map.get(end) == 'T' && inventory.get("axe") == 1){
 			moveQueue.add('c');
-			inventory.put("axe", false);
-		} else if (map.get(end) == '*' && inventory.get("dynamite") == true){
+			//inventory.put("raft", 1);
+		} else if (map.get(end) == '*' && inventory.get("dynamite") != 0){
 			moveQueue.add('b');
-			inventory.put("dynamite", false);
+			int currentDynamite = inventory.get("dynamite");
+			inventory.put("dynamite", currentDynamite-1);
 		}
 
 		moveQueue.add('f');
@@ -217,18 +226,22 @@ public class Agent {
 			following = false;
 		}
 		
-
+		System.out.format("wall follow added move %c \n", move);
 		moveQueue.add(move);
    }
 
 	public void updateMapAndDirection(char view[][]) {
 
-		//flag and coord for if an item appears in the 5x5
-		Boolean foundItem = false;
-		Coordinate itemCoord = new Coordinate(-90, -90);
+
 
       // Start of game,  map starting view
       if(lastMove == 'Z'){
+      	//initialising inventory storing
+      	inventory.put("raft", 0);
+      	inventory.put("key", 0);
+      	inventory.put("dynamite", 0);
+      	inventory.put("axe", 0);
+      	inventory.put("treasure", 0);
          int x = -2;
          for(int counter = 0; counter < 5; counter++){
             int y = 2;
@@ -283,7 +296,7 @@ public class Agent {
              		foundItem = true;
              		itemCoord = discovery;
              	}
-					System.out.print("put into map" + discoveredChar);
+					System.out.print("put into map" + discoveredChar + "\n");
 					viewCounter++;
 				}
          // Move North
@@ -299,7 +312,7 @@ public class Agent {
              		foundItem = true;
              		itemCoord = discovery;
              	}
-					System.out.print("put into map = |" + discoveredChar + "|");
+					System.out.print("put into map = |" + discoveredChar + "|" + "\n");
                viewCounter++;
             }
          // Move West
@@ -334,24 +347,29 @@ public class Agent {
              		foundItem = true;
              		itemCoord = discovery;
              	}
-        		 System.out.print("put into map = |" +discoveredChar + "|");
+					System.out.print("put into map = |" + discoveredChar + "|" + "\n");
         		 viewCounter++;
             }
          }
          //if current location had item then add to inventory hash
-         if(map.get(currentLocation) == 'a') inventory.put("axe", true);
-         if(map.get(currentLocation) == 'd') inventory.put("dynamite", true);
-         if(map.get(currentLocation) == 'k') inventory.put("key", true);
-         if(map.get(currentLocation) == '$') inventory.put("treasure", true);
-         if(foundItem == true){
-				Stack<Coordinate> makeMovesToItem = aStar(currentLocation, itemCoord);
-				Coordinate currentMove = makeMovesToItem.pop();
-         	while(!makeMovesToItem.isEmpty()){
-					Coordinate nextMove = makeMovesToItem.pop();
-         		moveDirection(currentMove, nextMove);
-         		currentMove = nextMove;
-         	}
+         if(map.get(currentLocation) == 'a') {
+				inventory.put("axe", 1);
+         	foundItem = false;
          }
+         int currentDynamite = inventory.get("dynamite");
+			if (map.get(currentLocation) == 'd') {
+				inventory.put("dynamite", currentDynamite + 1);
+				foundItem = false;
+			}
+			if (map.get(currentLocation) == 'k') {
+				inventory.put("key", 1);
+				foundItem = false;
+			}
+			if (map.get(currentLocation) == '$') {
+				inventory.put("treasure", 1);
+				foundItem = false;
+			}
+
       }
    }
 	
@@ -396,14 +414,13 @@ public class Agent {
 		int h2cost = 0;
 		if (map.get(current) == '.') {
 			h2cost = 100000;
-		} else if (map.get(current) == '~' && inventory.get("raft") == false || map.get(current) == '~' && !inventory.containsKey("raft")) {
+		} else if (map.get(current) == '~' && inventory.get("raft") == 0) {
 			h2cost = 6500;
-		} else if (map.get(current) == 'T' && inventory.get("axe") == false || map.get(current) == 'T' && !inventory.containsKey("axe")) {
+		} else if (map.get(current) == 'T' && inventory.get("axe") == 0) {
 			h2cost = 6500;
-			// } else if (map.get(current) == '*' && inventory.get("dynamite") == false
-			// || map.get(current) == '*' && !inventory.containsKey("dynamite")) {
-			// h2cost = 6500;
-		} else if (map.get(current) == '-' && inventory.get("key") == false || map.get(current) == '-' && !inventory.containsKey("key")) {
+		} else if (map.get(current) == '-' && inventory.get("key") == 0){
+			h2cost = 6500;
+		} else if (map.get(current) == '*' && inventory.get("dynamite") == 0){
 			h2cost = 6500;
 		}
 		return h2cost;
@@ -493,30 +510,73 @@ public class Agent {
 		
 		print_view(view);
 		
-		wallFollow(view);
 		
 		// Poll first element of move queue as next move
-		char nextMove = moveQueue.poll();
+		char nextMove = ' ';
 		
 		// +++++ TEMP +++++
-		if (view[1][2] == '$') {
-			nextMove = 'f';
+		// if (view[1][2] == '$') {
+		// nextMove = 'f';
+		// }
+		Stack<Coordinate> path;
+		// Plan path to item if we aren't already moving toward an item
+		if (foundItem == true && itemMoveQueue.isEmpty()) {
+			// Keep track of the total path cost to check for obstacles
+			int pathCost = 0;
+			Stack<Coordinate> makeMovesToItem = aStar(currentLocation, itemCoord);
+			Coordinate currCoord = currentLocation;
+			while (!makeMovesToItem.isEmpty()) {
+				pathCost += currCoord.get_fCost();
+				
+				System.out.print("I see the item\n");
+				Coordinate nextCoord = makeMovesToItem.pop();
+				moveDirection(currCoord, nextCoord, itemMoveQueue);
+				currCoord = nextCoord;
+			}
+			// System.out.print("move Queue head is " + moveQueue.element());
+			System.out.format("next move is %c\n", itemMoveQueue.element());
+			if (pathCost < 6400) {
+				// // Return to where we started moving toward item
+				// makeMovesToItem = aStar(itemCoord, currentLocation);
+				// currCoord = itemCoord;
+				// while (!makeMovesToItem.isEmpty()) {
+				// Coordinate nextCoord = makeMovesToItem.pop();
+				// moveDirection(currCoord, nextCoord);
+				// currCoord = nextCoord;
+				// }
+				nextMove = itemMoveQueue.poll();
+				lastMove = nextMove;
+				return nextMove;
+			}
+			
 		}
-		Stack<Coordinate> returnPath;
-		if (inventory.containsKey("treasure") && inventory.get("treasure")) {
+		
+		// Plan a path back if the agent has picked up the treasure
+		if (inventory.containsKey("treasure") && inventory.get("treasure") > 0) {
+			int pathCost = 0;
 			// Coordinate tempCoord = new Coordinate()
 			// DEBUG //System.out.print("I HAVE THE TREASURE \n\n");
-			returnPath = aStar(currentLocation, new Coordinate(0, 0));
-			while (!returnPath.empty()) {
-				Coordinate nextCoord = returnPath.pop();
+			// Plan a path back to start
+			path = aStar(currentLocation, new Coordinate(0, 0));
+			
+			// Add moves along the path to the move queue
+			Coordinate currCoord = currentLocation;
+			while (!path.empty()) {
+				pathCost += currCoord.get_fCost();
+				Coordinate nextCoord = path.pop();
+				moveDirection(currCoord, nextCoord, moveQueue);
+				currCoord = nextCoord;
+				
 				// DEBUG
 				System.out.print("Path back (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + '\n');
 			}
+			lastMove = nextMove;
 			return nextMove = ' ';
 		}
 		
-
-
+		wallFollow(view);
+		nextMove = moveQueue.poll();
+		System.out.print("NO ITEMS \n");
 		// Update last move
 		lastMove = nextMove;
 		return nextMove;
