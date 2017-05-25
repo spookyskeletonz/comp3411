@@ -124,7 +124,7 @@ public class Agent {
 	// Following a wall 
 	private boolean following = false;
 	// Store inventory
-	private Map<String, Boolean> inventory = new HashMap<String, Boolean>();
+	private Map<String, Integer> inventory = new HashMap<String, Integer>();
 	// Maintains a queue of moves to execute
 	private Queue<Character> moveQueue = new LinkedList<Character>();
 	
@@ -169,15 +169,16 @@ public class Agent {
 			}
 		}
 		//if item use is needed, queue up its use and flag it as false in hashmap
-		if (map.get(end) == '-' && inventory.get("key") == true){
+		if (map.get(end) == '-' && inventory.get("key") == 1){
 			moveQueue.add('u');
-			inventory.put("key", false);
-		} else if (map.get(end) == 'T' && inventory.get("axe") == true){
+			inventory.put("key", 0);
+		} else if (map.get(end) == 'T' && inventory.get("axe") == 1){
 			moveQueue.add('c');
-			inventory.put("axe", false);
-		} else if (map.get(end) == '*' && inventory.get("dynamite") == true){
+			//inventory.put("raft", 1);
+		} else if (map.get(end) == '*' && inventory.get("dynamite") != 0){
 			moveQueue.add('b');
-			inventory.put("dynamite", false);
+			int currentDynamite = inventory.get("dynamite");
+			inventory.put("dynamite", currentDynamite-1);
 		}
 
 		moveQueue.add('f');
@@ -228,6 +229,12 @@ public class Agent {
 
       // Start of game,  map starting view
       if(lastMove == 'Z'){
+      	//initialising inventory storing
+      	inventory.put("raft", 0);
+      	inventory.put("key", 0);
+      	inventory.put("dynamite", 0);
+      	inventory.put("axe", 0);
+      	inventory.put("treasure", 0);
          int x = -2;
          for(int counter = 0; counter < 5; counter++){
             int y = 2;
@@ -338,10 +345,11 @@ public class Agent {
             }
          }
          //if current location had item then add to inventory hash
-         if(map.get(currentLocation) == 'a') inventory.put("axe", true);
-         if(map.get(currentLocation) == 'd') inventory.put("dynamite", true);
-         if(map.get(currentLocation) == 'k') inventory.put("key", true);
-         if(map.get(currentLocation) == '$') inventory.put("treasure", true);
+         if(map.get(currentLocation) == 'a') inventory.put("axe", 1);
+         int currentDynamite = inventory.get("dynamite");
+         if(map.get(currentLocation) == 'd') inventory.put("dynamite", currentDynamite-1);
+         if(map.get(currentLocation) == 'k') inventory.put("key", 1);
+         if(map.get(currentLocation) == '$') inventory.put("treasure", 1);
          if(foundItem == true){
          	Queue<Coordinate> makeMovesToItem = aStar(currentLocation, itemCoord);
          	Coordinate currentMove = makeMovesToItem.poll();
@@ -395,15 +403,14 @@ public class Agent {
 		int h2cost = 0;
 		if (map.get(current) == '.') {
 			h2cost = 100000;
-		} else if (map.get(current) == '~' && inventory.get("raft") == false || map.get(current) == '~' && !inventory.containsKey("raft")) {
+		} else if (map.get(current) == '~' && map.get("raft") == 0){
 			h2cost = 6500;
-		} else if (map.get(current) == 'T' && inventory.get("axe") == false || map.get(current) == 'T' && !inventory.containsKey("axe")) {
+		} else if (map.get(current) == 'T' && inventory.get("axe") == 0) {
+			h2Cost = 6500;
+		} else if (map.get(current) == '-' && inventory.get("key") == 0){
 			h2cost = 6500;
-		} else if (map.get(current) == '*' && inventory.get("dynamite") == false
-				|| map.get(current) == '*' && !inventory.containsKey("dynamite")) {
-			h2cost = 6500;
-		} else if (map.get(current) == '-' && inventory.get("key") == false || map.get(current) == '-' && !inventory.containsKey("key")) {
-			h2cost = 6500;
+		} else if (map.get(current) == '*' && inventory.get("dynamite") == 0){
+			h2Cost = 6500;
 		}
 		return h2cost;
 	}
