@@ -169,6 +169,7 @@ public class Agent {
 			}
 		}
 		
+		moveQueue.add('f');
 	}
 	
 	// Keep wall/obstacles to the left and follow, move forward otherwise 
