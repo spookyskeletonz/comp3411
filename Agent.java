@@ -142,6 +142,7 @@ public class Agent {
 	private void moveDirection(Coordinate start, Coordinate end) {
 		int nextDirection = 0;
 		
+		// Change player direction to face goal location
 		if (start.get_x() == end.get_x() - 1) {
 			nextDirection = 0;
 		} else if (start.get_x() == end.get_x() + 1) {
@@ -437,6 +438,7 @@ public class Agent {
 					System.out.print("GOAL (" + currCoord.get_x() + "," + currCoord.get_y() + ")" + " prev = "
 							+ currCoord.get_prevCoord().get_x() + "," + currCoord.get_prevCoord().get_y() + "\n\n");
 				}
+				return path;
 			}
 			
 			ArrayList<Coordinate> adjacentCoords = getAdjacent(currCoord);
@@ -513,6 +515,7 @@ public class Agent {
 			return nextMove = ' ';
 		}
 		
+
 
 		// Update last move
 		lastMove = nextMove;
