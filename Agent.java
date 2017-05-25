@@ -347,7 +347,7 @@ public class Agent {
          //if current location had item then add to inventory hash
          if(map.get(currentLocation) == 'a') inventory.put("axe", 1);
          int currentDynamite = inventory.get("dynamite");
-         if(map.get(currentLocation) == 'd') inventory.put("dynamite", currentDynamite-1);
+         if(map.get(currentLocation) == 'd') inventory.put("dynamite", currentDynamite+1);
          if(map.get(currentLocation) == 'k') inventory.put("key", 1);
          if(map.get(currentLocation) == '$') inventory.put("treasure", 1);
          if(foundItem == true){
