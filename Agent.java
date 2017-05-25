@@ -195,27 +195,26 @@ public class Agent {
 		
 		
 		// If any obstacle to the left, we are following
-		if (isObstacle(leftView) == true){
+		if (isObstacle(leftView) == true || explored.get(adjacentCoords(currentLocation).get((direction+1)%4)) > 0){
 			following = true;
 		}
 		
 		// If no obstacles in front then move forward or rotate right if obstacle directly ahead
-		if (isObstacle(frontView) && !following) {
-			move = 'r';
-		} else if (isObstacle(frontView) && following) {
+		if (isObstacle(frontView) || explored.get(adjacentCoords(currentLocation).get(direction)) > 0) {
 			move = 'r';
 		} else {
          move = 'f';
 		}
 		
 		// If previously following a wall, turn to ensure we keep it on the left
-		if (following == true && isObstacle(leftView) == false && lastMove != 'l'){
+		if (following == true && isObstacle(leftView) == false && lastMove != 'l' || explored.get(adjacentCoords(currentLocation).get((direction+1)%4)) > 0 && lastMove != 'l' && following == true){
 			move = 'l';
 		}
+		/* the following code should now be redundant
 		// Prevents following infinitely along an obstacle, move on if we arrive at same spot more than twice
 		if (explored.get(currentLocation) > 2) {
 			following = false;
-		}
+		}*/
 		
 
 		moveQueue.add(move);
@@ -383,17 +382,17 @@ public class Agent {
 		Coordinate adjSouth = new Coordinate(currCoord.get_x(), currCoord.get_y() - 1);
 		Coordinate adjWest = new Coordinate(currCoord.get_x() - 1, currCoord.get_y());
 		
-		if (map.containsKey(adjNorth)) {
-			adjacentCoords.add(adjNorth);
-		}
 		if (map.containsKey(adjEast)) {
 			adjacentCoords.add(adjEast);
 		}
-		if (map.containsKey(adjSouth)) {
-			adjacentCoords.add(adjSouth);
+		if (map.containsKey(adjNorth)) {
+			adjacentCoords.add(adjNorth);
 		}
 		if (map.containsKey(adjWest)) {
 			adjacentCoords.add(adjWest);
+		}
+		if (map.containsKey(adjSouth)) {
+			adjacentCoords.add(adjSouth);
 		}
 		
 		return adjacentCoords;
