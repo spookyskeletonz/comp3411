@@ -414,14 +414,14 @@ public class Agent {
 		int h2cost = 0;
 		if (map.get(current) == '.') {
 			h2cost = 100000;
-		} else if (map.get(current) == '~' && inventory.get("raft") == 0) {
-			h2cost = 6500;
+		} else if (map.get(current) == '~' && map.get("raft") == 0){
+			h2cost = 90000;
 		} else if (map.get(current) == 'T' && inventory.get("axe") == 0) {
-			h2cost = 6500;
+			h2cost = 90000;
 		} else if (map.get(current) == '-' && inventory.get("key") == 0){
-			h2cost = 6500;
+			h2cost = 90000;
 		} else if (map.get(current) == '*' && inventory.get("dynamite") == 0){
-			h2cost = 6500;
+			h2cost = 90000;
 		}
 		return h2cost;
 	}
