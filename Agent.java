@@ -167,7 +167,7 @@ public class Agent {
 		//rotate to face right direction
 		if (rotates < 0){
 			while(rotates < 0) {
-				System.out.print("ERROR HERE?\n");
+				// System.out.print("ERROR HERE?\n");
 				moveQueue.add('l');
 				rotates++;
 			}
