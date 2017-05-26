@@ -550,6 +550,11 @@ public class Agent {
 			}
 			
 		}
+		if (!itemMoveQueue.isEmpty()) {
+			nextMove = itemMoveQueue.poll();
+			lastMove = nextMove;
+			return nextMove;
+		}
 		
 		// Plan a path back if the agent has picked up the treasure
 		if (inventory.containsKey("treasure") && inventory.get("treasure") > 0) {
@@ -571,7 +576,7 @@ public class Agent {
 				System.out.print("Path back (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + '\n');
 			}
 			lastMove = nextMove;
-			return nextMove = ' ';
+			return nextMove = moveQueue.poll();
 		}
 		
 		wallFollow(view);
