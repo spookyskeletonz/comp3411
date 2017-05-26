@@ -130,6 +130,8 @@ public class Agent {
 	// Queue of moves to pick up an item
 	private Queue<Character> itemMoveQueue = new LinkedList<Character>();
 	
+	private Stack<Coordinate> returnPath = new Stack<Coordinate>();
+	
 	// Indicator for if the agent has seen an item on its' adventure
 	Boolean foundItem = false;
 	// flag and coord for if an item appears in the 5x5
@@ -204,27 +206,26 @@ public class Agent {
 		
 		
 		// If any obstacle to the left, we are following
-		if (isObstacle(leftView) == true){
+		if (isObstacle(leftView) == true || explored.get(getAdjacent(currentLocation).get((direction + 1) % 4)) > 0) {
 			following = true;
 		}
 		
 		// If no obstacles in front then move forward or rotate right if obstacle directly ahead
-		if (isObstacle(frontView) && !following) {
-			move = 'r';
-		} else if (isObstacle(frontView) && following) {
+		if (isObstacle(frontView) || explored.get(getAdjacent(currentLocation).get(direction)) > 0) {
 			move = 'r';
 		} else {
          move = 'f';
 		}
 		
 		// If previously following a wall, turn to ensure we keep it on the left
-		if (following == true && isObstacle(leftView) == false && lastMove != 'l'){
+		if (following == true && isObstacle(leftView) == false && lastMove != 'l'|| explored.get(getAdjacent(currentLocation).get((direction + 1) % 4)) > 0 && lastMove != 'l' && following == true) {
 			move = 'l';
 		}
+		/* the following code should now be redundant
 		// Prevents following infinitely along an obstacle, move on if we arrive at same spot more than twice
 		if (explored.get(currentLocation) > 2) {
 			following = false;
-		}
+		}*/
 		
 		System.out.format("wall follow added move %c \n", move);
 		moveQueue.add(move);
@@ -394,17 +395,17 @@ public class Agent {
 		Coordinate adjSouth = new Coordinate(currCoord.get_x(), currCoord.get_y() - 1);
 		Coordinate adjWest = new Coordinate(currCoord.get_x() - 1, currCoord.get_y());
 		
-		if (map.containsKey(adjNorth)) {
-			adjacentCoords.add(adjNorth);
-		}
 		if (map.containsKey(adjEast)) {
 			adjacentCoords.add(adjEast);
 		}
-		if (map.containsKey(adjSouth)) {
-			adjacentCoords.add(adjSouth);
+		if (map.containsKey(adjNorth)) {
+			adjacentCoords.add(adjNorth);
 		}
 		if (map.containsKey(adjWest)) {
 			adjacentCoords.add(adjWest);
+		}
+		if (map.containsKey(adjSouth)) {
+			adjacentCoords.add(adjSouth);
 		}
 		
 		return adjacentCoords;
@@ -555,9 +556,12 @@ public class Agent {
 			lastMove = nextMove;
 			return nextMove;
 		}
+
 		
 		// Plan a path back if the agent has picked up the treasure
-		if (inventory.containsKey("treasure") && inventory.get("treasure") > 0) {
+		
+
+		if (inventory.containsKey("treasure") && inventory.get("treasure") == 1 && !returnPath.empty()) {
 			int pathCost = 0;
 			// Coordinate tempCoord = new Coordinate()
 			// DEBUG //System.out.print("I HAVE THE TREASURE \n\n");
