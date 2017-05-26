@@ -503,7 +503,7 @@ public class Agent {
 			nextMove = 'f';
 		}
 		Stack<Coordinate> returnPath;
-		if (inventory.containsKey("treasure") && inventory.get("treasure") && !returnPath.empty()) {
+		if (inventory.containsKey("treasure") && inventory.get("treasure") == 1 && !returnPath.empty()) {
 			// Coordinate tempCoord = new Coordinate()
 			// DEBUG //System.out.print("I HAVE THE TREASURE \n\n");
 			returnPath = aStar(currentLocation, new Coordinate(0, 0));
