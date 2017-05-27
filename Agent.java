@@ -503,9 +503,6 @@ public class Agent {
 				// All path movements are of "cost" 1, gCost of a coordinate is gCost of previous coordinate + 1
 				nextCoord.set_gCost(currCoord.get_gCost() + 1);
 				h2Cost = calculateH2Cost(nextCoord, numDynamite);
-				if (map.get(nextCoord) == '*' && h2Cost < 90000) {
-					numDynamite--;
-				}
 				nextCoord.set_hCost(h2Cost, goal);
 				nextCoord.set_prevCoord(currCoord);
 				// If closed set contains adjacent coordinate move onto next coordinate
