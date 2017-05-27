@@ -129,6 +129,8 @@ public class Agent {
 	private Queue<Character> moveQueue = new LinkedList<Character>();
 	// Queue of moves to pick up an item
 	private Queue<Character> itemMoveQueue = new LinkedList<Character>();
+
+	private Queue<Character> treeMoveQueue = new LinkedList<Character>();
 	
 	private Queue<Character> returnMoveQueue = new LinkedList<Character>();
 	
@@ -136,6 +138,11 @@ public class Agent {
 	Boolean foundItem = false;
 	// flag and coord for if an item appears in the 5x5
 	Coordinate itemCoord = new Coordinate(-90, -90);
+
+	// Indicator for tree to cut down
+	Boolean foundTree = false;
+	//flag and coord for if a tree appears in the 5x5
+	Coordinate treeCoord = new Coordinate(-90, -90);
 	
 	
 	// Checks if a provided character is an obstacle
@@ -291,6 +298,11 @@ public class Agent {
              		foundItem = true;
              		itemCoord = coord;
              	}
+             	// if tree appears trigger flag and store coord
+             	if(view[counter2][counter] == 'T'){
+             		foundTree = true;
+             		itemCoord = coord;
+             	}
                y--;
             }
             x++;
@@ -324,6 +336,10 @@ public class Agent {
              		foundItem = true;
              		itemCoord = discovery;
              	}
+             	if(discoveredChar == 'T'){
+             		foundTree = true;
+             		itemCoord = discovery;
+             	}
 					System.out.print("put into map" + discoveredChar + "\n");
 					viewCounter++;
 				}
@@ -338,6 +354,10 @@ public class Agent {
 					explored.put(discovery, 0);
 					if(discoveredChar == 'a' || discoveredChar == 'k' || discoveredChar == 'd' || discoveredChar == '$'){
              		foundItem = true;
+             		itemCoord = discovery;
+             	}
+             	if(discoveredChar == 'T'){
+             		foundTree = true;
              		itemCoord = discovery;
              	}
 					System.out.print("put into map = |" + discoveredChar + "|" + "\n");
@@ -359,6 +379,10 @@ public class Agent {
              		foundItem = true;
              		itemCoord = discovery;
              	}
+             	if(discoveredChar == 'T'){
+             		foundTree = true;
+             		itemCoord = discovery;
+             	}
 					System.out.print("put into map = |" + discoveredChar + "|" + "\n");
 					viewCounter++;
             }
@@ -373,6 +397,10 @@ public class Agent {
         		 explored.put(discovery, 0);
         		 if(discoveredChar == 'a' || discoveredChar == 'k' || discoveredChar == 'd' || discoveredChar == '$'){
              		foundItem = true;
+             		itemCoord = discovery;
+             	}
+             	if(discoveredChar == 'T'){
+             		foundTree = true;
              		itemCoord = discovery;
              	}
 					System.out.print("put into map = |" + discoveredChar + "|" + "\n");
@@ -448,7 +476,7 @@ public class Agent {
 		int h2cost = 0;
 		if (map.get(current) == '.') {
 			h2cost = 100000;
-		} else if (map.get(current) == '~' && map.get("raft") == 0){
+		} else if (map.get(current) == '~' && inventory.get("raft") == 0){
 			h2cost = 90000;
 		} else if (map.get(current) == 'T' && inventory.get("axe") == 0) {
 			h2cost = 90000;
@@ -570,6 +598,44 @@ public class Agent {
 			return true;
 		}
 	}
+
+	public boolean cutTree() {
+		// Keep track of the total path cost to check for obstacles
+		int pathCost = 0;
+		int pathDirection = direction;
+		Stack<Coordinate> makeMovesToTree = aStar(currentLocation, itemCoord);
+		// Create a path to the item from current location
+		Coordinate currCoord = currentLocation;
+		while (!makeMovesToTree.isEmpty()) {
+			pathCost += currCoord.get_fCost();
+			// DEBUG
+			Coordinate nextCoord = makeMovesToTree.pop();
+			
+			// System.out.print("I see the item\n");
+			pathDirection = moveDirection(currCoord, nextCoord, pathDirection, treeMoveQueue);
+			currCoord = nextCoord;
+		}
+		// System.out.print("move Queue head is " + moveQueue.element());
+		// DEBUG
+		// System.out.format("next move is %c\n", itemMoveQueue.element());
+		if (pathCost < 6400) {
+			// // Return to where we started moving toward item
+			// makeMovesToItem = aStar(itemCoord, currentLocation);
+			// currCoord = itemCoord;
+			// while (!makeMovesToItem.isEmpty()) {
+			// Coordinate nextCoord = makeMovesToItem.pop();
+			// moveDirection(currCoord, nextCoord);
+			// currCoord = nextCoord;
+			// }
+			
+		}			
+		if (pathCost >= 90000) {
+			treeMoveQueue.clear();
+			return false;
+		} else {
+			return true;
+		}
+	}
 	
 	public boolean returnToStart() {
 		int pathCost = 0;
@@ -629,6 +695,16 @@ public class Agent {
 		// If there are moves to be executed to retrieve the item, execute them
 		if (!itemMoveQueue.isEmpty()) {
 			nextMove = itemMoveQueue.poll();
+			lastMove = nextMove;
+			return nextMove;
+		}
+
+		if (foundTree == true && inventory.get("axe") == 1 && treeMoveQueue.isEmpty()){
+			cutTree();
+		}
+
+		if (!treeMoveQueue.isEmpty()){
+			nextMove = treeMoveQueue.poll();
 			lastMove = nextMove;
 			return nextMove;
 		}
