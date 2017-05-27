@@ -196,6 +196,7 @@ public class Agent {
 		//if item use is needed, queue up its use and flag it as false in hashmap
 		if (map.get(to) == '-' && inventory.get("key") == 1) {
 			moveQueue.add('u');
+			map.put(to, ' ');
 		} else if (map.get(to) == 'T' && inventory.get("axe") == 1) {
 			moveQueue.add('c');
 			//inventory.put("raft", 1);
@@ -299,9 +300,9 @@ public class Agent {
              		itemCoord = coord;
              	}
              	// if tree appears trigger flag and store coord
-             	if(view[counter2][counter] == 'T'){
+					if (view[counter2][counter] == 'T' && inventory.get("axe") > 0) {
              		foundTree = true;
-             		itemCoord = coord;
+						treeCoord = coord;
              	}
                y--;
             }
@@ -338,7 +339,7 @@ public class Agent {
              	}
              	if(discoveredChar == 'T'){
              		foundTree = true;
-             		itemCoord = discovery;
+						treeCoord = discovery;
              	}
 					System.out.print("put into map" + discoveredChar + "\n");
 					viewCounter++;
@@ -358,7 +359,7 @@ public class Agent {
              	}
              	if(discoveredChar == 'T'){
              		foundTree = true;
-             		itemCoord = discovery;
+						treeCoord = discovery;
              	}
 					System.out.print("put into map = |" + discoveredChar + "|" + "\n");
                viewCounter++;
@@ -381,7 +382,7 @@ public class Agent {
              	}
              	if(discoveredChar == 'T'){
              		foundTree = true;
-             		itemCoord = discovery;
+						treeCoord = discovery;
              	}
 					System.out.print("put into map = |" + discoveredChar + "|" + "\n");
 					viewCounter++;
@@ -401,7 +402,7 @@ public class Agent {
              	}
              	if(discoveredChar == 'T'){
              		foundTree = true;
-             		itemCoord = discovery;
+						treeCoord = discovery;
              	}
 					System.out.print("put into map = |" + discoveredChar + "|" + "\n");
         		 viewCounter++;
@@ -595,6 +596,7 @@ public class Agent {
 		}			
 		if (pathCost >= 90000) {
 			itemMoveQueue.clear();
+			foundItem = false;
 			return false;
 		} else {
 			return true;
@@ -605,7 +607,7 @@ public class Agent {
 		// Keep track of the total path cost to check for obstacles
 		int pathCost = 0;
 		int pathDirection = direction;
-		Stack<Coordinate> makeMovesToTree = aStar(currentLocation, itemCoord);
+		Stack<Coordinate> makeMovesToTree = aStar(currentLocation, treeCoord);
 		// Create a path to the item from current location
 		Coordinate currCoord = currentLocation;
 		while (!makeMovesToTree.isEmpty()) {
@@ -704,16 +706,18 @@ public class Agent {
 			return nextMove;
 		}
 		//
-		// if (foundTree == true && foundItem == false && inventory.get("axe") == 1 && treeMoveQueue.isEmpty()) {
-		// cutTree();
-		// }
-		//
-		// if (!treeMoveQueue.isEmpty()){
-		// nextMove = treeMoveQueue.poll();
-		// lastMove = nextMove;
-		// return nextMove;
-		// }
-		//
+		
+		if (foundTree == true && inventory.get("axe") == 1 && treeMoveQueue.isEmpty()) {
+			System.out.print("Going to cut tree now? \n");
+			cutTree();
+		}
+		
+		if (!treeMoveQueue.isEmpty()) {
+			nextMove = treeMoveQueue.poll();
+			lastMove = nextMove;
+			return nextMove;
+		}
+		
 		//
 		// Plan a path back if the agent has picked up the treasure
 		if (inventory.containsKey("treasure") && inventory.get("treasure") == 1 && returnMoveQueue.isEmpty()) {
