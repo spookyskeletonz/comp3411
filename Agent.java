@@ -324,7 +324,7 @@ public class Agent {
              		foundItem = true;
              		itemCoord = discovery;
              	}
-					System.out.print("put into map" + discoveredChar + "\n");
+					System.out.print("put into map = |" + discoveredChar + "|" + "\n");
 					viewCounter++;
 				}
          // Move North
@@ -444,17 +444,17 @@ public class Agent {
 	
 	// Calculates heuristics of a certain coordinate, heuristic is very high for coordinates with obstacles or normal if we have an item to
 	// clear obstacle
-	public int calculateH2Cost(Coordinate current) {
+	public int calculateH2Cost(Coordinate current, int numDynamite) {
 		int h2cost = 0;
 		if (map.get(current) == '.') {
 			h2cost = 100000;
-		} else if (map.get(current) == '~' && map.get("raft") == 0){
+		} else if (map.get(current) == '~' && inventory.get("raft") == 0) {
 			h2cost = 90000;
 		} else if (map.get(current) == 'T' && inventory.get("axe") == 0) {
 			h2cost = 90000;
 		} else if (map.get(current) == '-' && inventory.get("key") == 0){
 			h2cost = 90000;
-		} else if (map.get(current) == '*' && inventory.get("dynamite") == 0){
+		} else if (map.get(current) == '*' && numDynamite == 0){
 			h2cost = 90000;
 		}
 		return h2cost;
@@ -466,6 +466,9 @@ public class Agent {
 		Comparator<Coordinate> coordComparator = new coordinateComparator();
 		PriorityQueue<Coordinate> open = new PriorityQueue<Coordinate>(100, coordComparator);
 		ArrayList<Coordinate> closed = new ArrayList<Coordinate>();
+		
+		int numDynamite = inventory.get("dynamite");
+		
 		// Heuristic cost of a coordinate based on what value the coordinate holds
 		int h2Cost = 0;
 		start.set_gCost(0);
@@ -499,7 +502,10 @@ public class Agent {
 
 				// All path movements are of "cost" 1, gCost of a coordinate is gCost of previous coordinate + 1
 				nextCoord.set_gCost(currCoord.get_gCost() + 1);
-				h2Cost = calculateH2Cost(nextCoord);
+				h2Cost = calculateH2Cost(nextCoord, numDynamite);
+				if (map.get(nextCoord) == '*' && h2Cost < 90000) {
+					numDynamite--;
+				}
 				nextCoord.set_hCost(h2Cost, goal);
 				nextCoord.set_prevCoord(currCoord);
 				// If closed set contains adjacent coordinate move onto next coordinate
@@ -548,6 +554,10 @@ public class Agent {
 			// System.out.print("I see the item\n");
 			pathDirection = moveDirection(currCoord, nextCoord, pathDirection, itemMoveQueue);
 			currCoord = nextCoord;
+			
+			// DEBUG
+			System.out.print("PATH TO ITEM (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + '\n');
+			
 		}
 		// System.out.print("move Queue head is " + moveQueue.element());
 		// DEBUG
