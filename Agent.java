@@ -574,8 +574,10 @@ public class Agent {
 			Coordinate nextCoord = makeMovesToItem.pop();
 			
 			// System.out.print("I see the item\n");
+			
 			pathDirection = moveDirection(currCoord, nextCoord, pathDirection, itemMoveQueue);
 			currCoord = nextCoord;
+			System.out.print("Path to item (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + '\n');
 		}
 		// System.out.print("move Queue head is " + moveQueue.element());
 		// DEBUG
@@ -614,7 +616,10 @@ public class Agent {
 			// System.out.print("I see the item\n");
 			pathDirection = moveDirection(currCoord, nextCoord, pathDirection, treeMoveQueue);
 			currCoord = nextCoord;
+			
+			System.out.print("Path to tree (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + '\n');
 		}
+		
 		// System.out.print("move Queue head is " + moveQueue.element());
 		// DEBUG
 		// System.out.format("next move is %c\n", itemMoveQueue.element());
@@ -698,18 +703,18 @@ public class Agent {
 			lastMove = nextMove;
 			return nextMove;
 		}
-
-		if (foundTree == true && inventory.get("axe") == 1 && treeMoveQueue.isEmpty()){
-			cutTree();
-		}
-
-		if (!treeMoveQueue.isEmpty()){
-			nextMove = treeMoveQueue.poll();
-			lastMove = nextMove;
-			return nextMove;
-		}
-
-		
+		//
+		// if (foundTree == true && foundItem == false && inventory.get("axe") == 1 && treeMoveQueue.isEmpty()) {
+		// cutTree();
+		// }
+		//
+		// if (!treeMoveQueue.isEmpty()){
+		// nextMove = treeMoveQueue.poll();
+		// lastMove = nextMove;
+		// return nextMove;
+		// }
+		//
+		//
 		// Plan a path back if the agent has picked up the treasure
 		if (inventory.containsKey("treasure") && inventory.get("treasure") == 1 && returnMoveQueue.isEmpty()) {
 			returnToStart();
