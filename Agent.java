@@ -130,7 +130,7 @@ public class Agent {
 	// Queue of moves to pick up an item
 	private Queue<Character> itemMoveQueue = new LinkedList<Character>();
 	
-	private Stack<Coordinate> returnPath = new Stack<Coordinate>();
+	private Queue<Character> returnMoveQueue = new LinkedList<Character>();
 	
 	// Indicator for if the agent has seen an item on its' adventure
 	Boolean foundItem = false;
@@ -148,51 +148,59 @@ public class Agent {
 	}
 
 	// input 2 adjacent coordinates and this function will queue up the required moves to move there
-	private void moveDirection(Coordinate start, Coordinate end, Queue<Character> moveQueue) {
+	private int moveDirection(Coordinate from, Coordinate to, int prevDirection, Queue<Character> moveQueue) {
 		int nextDirection = 0;
-		
+		// DEBUG
+		// System.out.format("moveDirection: from (%d, %d), to (%d, %d) \n", from.get_x(), from.get_y(), to.get_x(), to.get_y());
 		// Change player direction to face goal location
-		if (start.get_x() == end.get_x() - 1) {
+		if (from.get_x() == to.get_x() - 1) {
 			nextDirection = 0;
-		} else if (start.get_x() == end.get_x() + 1) {
+		} else if (from.get_x() == to.get_x() + 1) {
 			nextDirection = 2;
-		} else if (start.get_y() == end.get_y() - 1) {
+		} else if (from.get_y() == to.get_y() - 1) {
 			nextDirection = 1;
-		} else if (start.get_y() == end.get_y() + 1) {
+		} else if (from.get_y() == to.get_y() + 1) {
 			nextDirection = 3;
 		} else {
-			System.out.println("moveDirection: wrong input");
-			return;
+			System.out.println("moveDirection: wrong input\n");
+			return -99;
 		}
 		
-		int rotates = direction - nextDirection;
+		int rotates = prevDirection - nextDirection;
+		// DEBUG
+		// System.out.format("moveDirection: rotates = %d - %d = %d \n", prevDirection, nextDirection, rotates);
 		//rotate to face right direction
 		if (rotates < 0){
 			while(rotates < 0) {
 				// System.out.print("ERROR HERE?\n");
 				moveQueue.add('l');
+				// DEBUG
+				// System.out.format("moveDirection added move l to queue\n");
 				rotates++;
 			}
 		} else if (rotates > 0) {
 			while (rotates > 0) {
+				// DEBUG
+				// System.out.format("moveDirection added move r to queue\n");
 				moveQueue.add('r');
 				rotates--;
 			}
 		}
 		//if item use is needed, queue up its use and flag it as false in hashmap
-		if (map.get(end) == '-' && inventory.get("key") == 1){
+		if (map.get(to) == '-' && inventory.get("key") == 1) {
 			moveQueue.add('u');
 			inventory.put("key", 0);
-		} else if (map.get(end) == 'T' && inventory.get("axe") == 1){
+		} else if (map.get(to) == 'T' && inventory.get("axe") == 1) {
 			moveQueue.add('c');
 			//inventory.put("raft", 1);
-		} else if (map.get(end) == '*' && inventory.get("dynamite") != 0){
+		} else if (map.get(to) == '*' && inventory.get("dynamite") != 0) {
 			moveQueue.add('b');
 			int currentDynamite = inventory.get("dynamite");
 			inventory.put("dynamite", currentDynamite-1);
 		}
 
 		moveQueue.add('f');
+		return nextDirection;
 	}
 	
 	// Keep wall/obstacles to the left and follow, move forward otherwise 
@@ -205,27 +213,47 @@ public class Agent {
 		char leftView = view[2][1];
 		
 		
-		// If any obstacle to the left, we are following
-		if (isObstacle(leftView) == true || explored.get(getAdjacent(currentLocation).get((direction + 1) % 4)) > 0) {
+		// // If any obstacle to the left, we are following
+		// if (isObstacle(leftView) == true || explored.get(getAdjacent(currentLocation).get((direction + 1) % 4)) > 0) {
+		// following = true;
+		// }
+		//
+		// // If no obstacles in front then move forward or rotate right if obstacle directly ahead
+		// if (isObstacle(frontView) || explored.get(getAdjacent(currentLocation).get(direction)) > 2) {
+		// move = 'r';
+		// } else {
+		// move = 'f';
+		// }
+		//
+		// // If previously following a wall, turn to ensure we keep it on the left
+		// if (following == true && isObstacle(leftView) == false && lastMove != 'l'
+		// || explored.get(getAdjacent(currentLocation).get((direction + 1) % 4)) > 2 && lastMove != 'l' && following == true) {
+		// move = 'l';
+		// }
+		
+		if (isObstacle(leftView) == true) {
 			following = true;
 		}
 		
 		// If no obstacles in front then move forward or rotate right if obstacle directly ahead
-		if (isObstacle(frontView) || explored.get(getAdjacent(currentLocation).get(direction)) > 0) {
+		if (isObstacle(frontView)) {
 			move = 'r';
 		} else {
          move = 'f';
 		}
 		
 		// If previously following a wall, turn to ensure we keep it on the left
-		if (following == true && isObstacle(leftView) == false && lastMove != 'l'|| explored.get(getAdjacent(currentLocation).get((direction + 1) % 4)) > 0 && lastMove != 'l' && following == true) {
+		if (following == true && isObstacle(leftView) == false && lastMove != 'l') {
 			move = 'l';
 		}
-		/* the following code should now be redundant
-		// Prevents following infinitely along an obstacle, move on if we arrive at same spot more than twice
-		if (explored.get(currentLocation) > 2) {
+		if (explored.get(currentLocation) > 2)
 			following = false;
-		}*/
+		/*
+		 * t
+		 * 
+		 * /* the following code should now be redundant // Prevents following infinitely along an obstacle, move on if we arrive at same spot
+		 * more than twice if (explored.get(currentLocation) > 2) { following = false; }
+		 */
 		
 		System.out.format("wall follow added move %c \n", move);
 		moveQueue.add(move);
@@ -292,7 +320,7 @@ public class Agent {
 					char discoveredChar = view[0][viewCounter];
 					map.put(discovery, discoveredChar);
 					explored.put(discovery, 0);
-					//if item apears trigger flag and store coord
+					// if item appears trigger flag and store coord
              	if(discoveredChar == 'a' || discoveredChar == 'k' || discoveredChar == 'd' || discoveredChar == '$'){
              		foundItem = true;
              		itemCoord = discovery;
@@ -322,9 +350,9 @@ public class Agent {
 				int viewCounter = 0;
 				for (int counter = -2; counter <= 2; counter++) {
 					Coordinate discovery = new Coordinate(currentLocation.get_x() - 2, currentLocation.get_y() + counter);
-					
-					System.out.print("DISCOVERY IS " + discovery.get_x() + "," + discovery.get_y() + "\n");
-					System.out.print("ViewCounter = " + viewCounter + "\n");
+					// DEBUG
+					// System.out.print("DISCOVERY IS " + discovery.get_x() + "," + discovery.get_y() + "\n");
+					// System.out.print("ViewCounter = " + viewCounter + "\n");
 					char discoveredChar = view[0][viewCounter];
 					map.put(discovery, discoveredChar);
 					explored.put(discovery, 0);
@@ -355,19 +383,23 @@ public class Agent {
          //if current location had item then add to inventory hash
          if(map.get(currentLocation) == 'a') {
 				inventory.put("axe", 1);
-         	foundItem = false;
+				map.put(currentLocation, ' ');
+				foundItem = false;
          }
          int currentDynamite = inventory.get("dynamite");
 			if (map.get(currentLocation) == 'd') {
 				inventory.put("dynamite", currentDynamite + 1);
+				map.put(currentLocation, ' ');
 				foundItem = false;
 			}
 			if (map.get(currentLocation) == 'k') {
 				inventory.put("key", 1);
+				map.put(currentLocation, ' ');
 				foundItem = false;
 			}
 			if (map.get(currentLocation) == '$') {
 				inventory.put("treasure", 1);
+				map.put(currentLocation, ' ');
 				foundItem = false;
 			}
 
@@ -411,6 +443,8 @@ public class Agent {
 		return adjacentCoords;
 	}
 	
+	// Calculates heuristics of a certain coordinate, heuristic is very high for coordinates with obstacles or normal if we have an item to
+	// clear obstacle
 	public int calculateH2Cost(Coordinate current) {
 		int h2cost = 0;
 		if (map.get(current) == '.') {
@@ -453,8 +487,8 @@ public class Agent {
 					path.push(currCoord.get_prevCoord());
 					currCoord = currCoord.get_prevCoord();
 					// DEBUG
-					System.out.print("GOAL (" + currCoord.get_x() + "," + currCoord.get_y() + ")" + " prev = "
-							+ currCoord.get_prevCoord().get_x() + "," + currCoord.get_prevCoord().get_y() + "\n\n");
+					// System.out.print("GOAL (" + currCoord.get_x() + "," + currCoord.get_y() + ")" + " prev = "
+					// + currCoord.get_prevCoord().get_x() + "," + currCoord.get_prevCoord().get_y() + "\n\n");
 				}
 				return path;
 			}
@@ -499,58 +533,101 @@ public class Agent {
 		return path;
 	}
 
+	// Returns the pathCost to retrieve an item it sees
+	public boolean retrieveItem() {
+		// Keep track of the total path cost to check for obstacles
+		int pathCost = 0;
+		int pathDirection = direction;
+		Stack<Coordinate> makeMovesToItem = aStar(currentLocation, itemCoord);
+		// Create a path to the item from current location
+		Coordinate currCoord = currentLocation;
+		while (!makeMovesToItem.isEmpty()) {
+			pathCost += currCoord.get_fCost();
+			// DEBUG
+			Coordinate nextCoord = makeMovesToItem.pop();
+			
+			// System.out.print("I see the item\n");
+			pathDirection = moveDirection(currCoord, nextCoord, pathDirection, itemMoveQueue);
+			currCoord = nextCoord;
+		}
+		// System.out.print("move Queue head is " + moveQueue.element());
+		// DEBUG
+		// System.out.format("next move is %c\n", itemMoveQueue.element());
+		if (pathCost < 6400) {
+			// // Return to where we started moving toward item
+			// makeMovesToItem = aStar(itemCoord, currentLocation);
+			// currCoord = itemCoord;
+			// while (!makeMovesToItem.isEmpty()) {
+			// Coordinate nextCoord = makeMovesToItem.pop();
+			// moveDirection(currCoord, nextCoord);
+			// currCoord = nextCoord;
+			// }
+			
+		}			
+		if (pathCost >= 90000) {
+			itemMoveQueue.clear();
+			return false;
+		} else {
+			return true;
+		}
+	}
+	
+	public boolean returnToStart() {
+		int pathCost = 0;
+		int pathDirection = direction;
+		Stack<Coordinate> returnPath = new Stack<Coordinate>();
+		// Coordinate tempCoord = new Coordinate()
+		// DEBUG //System.out.print("I HAVE THE TREASURE \n\n");
+		// Plan a path back to start
+		returnPath = aStar(currentLocation, new Coordinate(0, 0));
+		
+		// Add moves along the path to the move queue
+		Coordinate currCoord = currentLocation;
+		while (!returnPath.empty()) {
+			pathCost += currCoord.get_fCost();
+			Coordinate nextCoord = returnPath.pop();
+			pathDirection = moveDirection(currCoord, nextCoord, pathDirection, returnMoveQueue);
+			currCoord = nextCoord;
+			
+			// DEBUG
+			System.out.print("Path back (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + '\n');
+			
+		}
+		if (pathCost >= 90000) {
+			returnMoveQueue.clear();
+			return false;
+		} else {
+			return true;
+		}
+	}
+	
 	public char get_action(char view[][]) {
 
 
 
 		// At each move update map and direction
 		updateMapAndDirection(view);
-		System.out.print("line 140 last move was " + lastMove + " current direction = " + direction + "\n");
+		// DEBUG
+		System.out.print("last move was " + lastMove + " current direction = " + direction + "\n");
 		System.out.print("x coordinate = " + currentLocation.get_x() + " y coordinate = " + currentLocation.get_y() + "\n");
 		System.out.print("current location = " + map.get(currentLocation));
-		
+		// Print current view of map
 		print_view(view);
 		
 		
-		// Poll first element of move queue as next move
+		// Initialise nextMove
 		char nextMove = ' ';
 		
 		// +++++ TEMP +++++
 		// if (view[1][2] == '$') {
 		// nextMove = 'f';
 		// }
-		Stack<Coordinate> path;
 		// Plan path to item if we aren't already moving toward an item
 		if (foundItem == true && itemMoveQueue.isEmpty()) {
-			// Keep track of the total path cost to check for obstacles
-			int pathCost = 0;
-			Stack<Coordinate> makeMovesToItem = aStar(currentLocation, itemCoord);
-			Coordinate currCoord = currentLocation;
-			while (!makeMovesToItem.isEmpty()) {
-				pathCost += currCoord.get_fCost();
-				
-				System.out.print("I see the item\n");
-				Coordinate nextCoord = makeMovesToItem.pop();
-				moveDirection(currCoord, nextCoord, itemMoveQueue);
-				currCoord = nextCoord;
-			}
-			// System.out.print("move Queue head is " + moveQueue.element());
-			System.out.format("next move is %c\n", itemMoveQueue.element());
-			if (pathCost < 6400) {
-				// // Return to where we started moving toward item
-				// makeMovesToItem = aStar(itemCoord, currentLocation);
-				// currCoord = itemCoord;
-				// while (!makeMovesToItem.isEmpty()) {
-				// Coordinate nextCoord = makeMovesToItem.pop();
-				// moveDirection(currCoord, nextCoord);
-				// currCoord = nextCoord;
-				// }
-				nextMove = itemMoveQueue.poll();
-				lastMove = nextMove;
-				return nextMove;
-			}
-			
+			// Check that we are able to retrieve item with items we already have
+			retrieveItem();
 		}
+		// If there are moves to be executed to retrieve the item, execute them
 		if (!itemMoveQueue.isEmpty()) {
 			nextMove = itemMoveQueue.poll();
 			lastMove = nextMove;
@@ -559,32 +636,20 @@ public class Agent {
 
 		
 		// Plan a path back if the agent has picked up the treasure
-		
-
-		if (inventory.containsKey("treasure") && inventory.get("treasure") == 1 && !returnPath.empty()) {
-			int pathCost = 0;
-			// Coordinate tempCoord = new Coordinate()
-			// DEBUG //System.out.print("I HAVE THE TREASURE \n\n");
-			// Plan a path back to start
-			path = aStar(currentLocation, new Coordinate(0, 0));
-			
-			// Add moves along the path to the move queue
-			Coordinate currCoord = currentLocation;
-			while (!path.empty()) {
-				pathCost += currCoord.get_fCost();
-				Coordinate nextCoord = path.pop();
-				moveDirection(currCoord, nextCoord, moveQueue);
-				currCoord = nextCoord;
-				
-				// DEBUG
-				System.out.print("Path back (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + '\n');
-			}
-			lastMove = nextMove;
-			return nextMove = moveQueue.poll();
+		if (inventory.containsKey("treasure") && inventory.get("treasure") == 1 && returnMoveQueue.isEmpty()) {
+			returnToStart();
+		}
+		if (!returnMoveQueue.isEmpty()) {
+			lastMove = returnMoveQueue.peek();
+			// DEBUG
+			// System.out.print("RETURNING NOW \n");
+			return nextMove = returnMoveQueue.poll();
 		}
 		
+
 		wallFollow(view);
 		nextMove = moveQueue.poll();
+		// DEBUG
 		System.out.print("NO ITEMS \n");
 		// Update last move
 		lastMove = nextMove;
