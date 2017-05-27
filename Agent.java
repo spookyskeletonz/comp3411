@@ -189,7 +189,6 @@ public class Agent {
 		//if item use is needed, queue up its use and flag it as false in hashmap
 		if (map.get(to) == '-' && inventory.get("key") == 1) {
 			moveQueue.add('u');
-			inventory.put("key", 0);
 		} else if (map.get(to) == 'T' && inventory.get("axe") == 1) {
 			moveQueue.add('c');
 			//inventory.put("raft", 1);
