@@ -131,6 +131,12 @@ public class Agent {
 	private Queue<Character> itemMoveQueue = new LinkedList<Character>();
 	
 	private Queue<Character> returnMoveQueue = new LinkedList<Character>();
+
+	//breadcrumbing for deadend cases in wallfollow
+	private Stack<Coordinate> breadcrumb = new Stack<Coordinate>();
+	private Queue<Character> breadcrumbMoveQueue = new LinkedList<Character>();
+	boolean layingBreadcrumb = false;
+	boolean tracingBreadcrumb = false;
 	
 	// Indicator for if the agent has seen an item on its' adventure
 	Boolean foundItem = false;
@@ -183,6 +189,7 @@ public class Agent {
 				// DEBUG
 				// System.out.format("moveDirection added move r to queue\n");
 				moveQueue.add('r');
+				System.out.println("r");
 				rotates--;
 			}
 		}
@@ -199,7 +206,28 @@ public class Agent {
 		}
 
 		moveQueue.add('f');
+		System.out.println("f");
 		return nextDirection;
+	}
+
+	//find if coordinate has an adjacent that has not been explored
+	public int findOpening(Coordinate c, char view[][]){
+		char frontView = view[1][2];
+		char backView = view[3][2];
+		char rightView = view[2][3];
+		char leftView = view[2][1];
+		
+		if(isObstacle(frontView) == false && explored.get(getAdjacent(currentLocation).get(direction)) == 0){
+			return direction;
+		} else if(isObstacle(leftView) == false && explored.get(getAdjacent(currentLocation).get((direction + 1)%4)) == 0){
+			return (direction + 1) % 4;
+		} else if(isObstacle(rightView) == false && explored.get(getAdjacent(currentLocation).get(((direction-1)+4)%4)) == 0){
+			return ((direction - 1)+4)%4;
+		} else if(isObstacle(backView) == false && explored.get(getAdjacent(currentLocation).get((direction+2)%4)) == 0){
+			return ((direction+2)%4);
+		} else {
+			return -1;
+		}
 	}
 	
 	// Keep wall/obstacles to the left and follow, move forward otherwise 
@@ -211,51 +239,110 @@ public class Agent {
 		char rightView = view[2][3];
 		char leftView = view[2][1];
 		
-		
-		// // If any obstacle to the left, we are following
-		// if (isObstacle(leftView) == true || explored.get(getAdjacent(currentLocation).get((direction + 1) % 4)) > 0) {
-		// following = true;
-		// }
-		//
-		// // If no obstacles in front then move forward or rotate right if obstacle directly ahead
-		// if (isObstacle(frontView) || explored.get(getAdjacent(currentLocation).get(direction)) > 2) {
-		// move = 'r';
-		// } else {
-		// move = 'f';
-		// }
-		//
-		// // If previously following a wall, turn to ensure we keep it on the left
-		// if (following == true && isObstacle(leftView) == false && lastMove != 'l'
-		// || explored.get(getAdjacent(currentLocation).get((direction + 1) % 4)) > 2 && lastMove != 'l' && following == true) {
-		// move = 'l';
-		// }
-		
-		if (isObstacle(leftView) == true) {
-			following = true;
-		}
-		
-		// If no obstacles in front then move forward or rotate right if obstacle directly ahead
-		if (isObstacle(frontView)) {
-			move = 'r';
-		} else {
-         move = 'f';
-		}
-		
-		// If previously following a wall, turn to ensure we keep it on the left
-		if (following == true && isObstacle(leftView) == false && lastMove != 'l') {
-			move = 'l';
-		}
-		if (explored.get(currentLocation) > 2)
-			following = false;
+		layingBreadcrumb = false;
+
+		//explanation of how breadcrumb works:
 		/*
-		 * t
-		 * 
-		 * /* the following code should now be redundant // Prevents following infinitely along an obstacle, move on if we arrive at same spot
-		 * more than twice if (explored.get(currentLocation) > 2) { following = false; }
-		 */
+			if we encounter a current location where both left and right sides are blocked
+			we start 'laying the breadcrumb'. this will put all movements along the wallfollow into the stack.
+			eventually we may hit a dead end. at this point we stop laying the breadcrumb and start tracing it back.
+			once we reach a point on the breadcrumb that has an open path(this may not be the start fo the breadcrumb)
+			we stop tracing and move into this new path. if we reach a dead end we a* to the previous point on the stack
+		*/
 		
-		System.out.format("wall follow added move %c \n", move);
-		moveQueue.add(move);
+		//if in a one way path situation start tracing
+		if(tracingBreadcrumb == false){
+			if(isObstacle(leftView) == true || explored.get(getAdjacent(currentLocation).get((direction + 1)%4)) > 0){
+				if(isObstacle(rightView) == true || explored.get(getAdjacent(currentLocation).get(((direction-1)+4)%4)) > 0){
+					System.out.println("flag 1");
+					layingBreadcrumb = true;
+				}
+			}
+		}
+
+		//push to stack
+		if(layingBreadcrumb == true){
+			System.out.println("flag 2");
+			breadcrumb.push(new Coordinate(currentLocation.get_x(), currentLocation.get_y()));
+		}
+		System.out.println(findOpening(currentLocation, view));
+
+		//if reach deadend, start tracing back
+		if(findOpening(currentLocation, view) == -1){
+			System.out.println("flag 3");
+			tracingBreadcrumb = true;
+			layingBreadcrumb = false;
+		}
+
+		//tracing back breadcrumb till find a coordinate with opening
+		if(tracingBreadcrumb == true){
+			if(findOpening(currentLocation, view) == -1){
+				System.out.println("flag 4.1");
+				Coordinate next = breadcrumb.pop();
+				while(next.equals(currentLocation)){
+					System.out.println("x1:"+next.get_x()+"y1:"+next.get_y());
+					next = breadcrumb.pop();
+				}
+				System.out.println("x:"+next.get_x()+"y:"+next.get_y());
+				System.out.println(next.get_x());
+				Stack<Coordinate> path = aStar(currentLocation, next);
+				Coordinate current = new Coordinate(currentLocation.get_x(), currentLocation.get_y());
+				int pathDirection = direction;
+				while(!path.empty()){
+					System.out.println("flag 4.1.1");
+					next = path.pop();
+					pathDirection = moveDirection(current, next, pathDirection, breadcrumbMoveQueue);
+					current = next;
+				}
+			} else {
+				System.out.println("flag 4.2");
+				tracingBreadcrumb = false;
+				moveDirection(currentLocation, getAdjacent(currentLocation).get(findOpening(currentLocation, view)), direction, moveQueue);
+			}
+			System.out.println("chec2");
+			//return;
+		} else {
+
+			// If any obstacle to the left, we are following
+			if (isObstacle(leftView) == true || explored.get(getAdjacent(currentLocation).get((direction + 1) % 4)) > 0) {
+			following = true;
+			}
+			
+			// If no obstacles in front then move forward or rotate right if obstacle directly ahead
+			if (isObstacle(frontView) || explored.get(getAdjacent(currentLocation).get(direction)) > 2) {
+			move = 'r';
+			} else {
+			move = 'f';
+			}
+			
+			// If previously following a wall, turn to ensure we keep it on the left
+			if (following == true && isObstacle(leftView) == false && lastMove != 'l'
+			|| explored.get(getAdjacent(currentLocation).get((direction + 1) % 4)) > 2 && lastMove != 'l' && following == true) {
+			move = 'l';
+			}
+
+			
+			// if (isObstacle(leftView) == true) {
+			// 	following = true;
+			// }
+			
+			// // If no obstacles in front then move forward or rotate right if obstacle directly ahead
+			// if (isObstacle(frontView)) {
+			// 	move = 'r';
+			// } else {
+	   	//    move = 'f';
+			// }
+			
+			// // If previously following a wall, turn to ensure we keep it on the left
+			// if (following == true && isObstacle(leftView) == false && lastMove != 'l') {
+			// 	move = 'l';
+			// }
+			// if (explored.get(currentLocation) > 2)
+			// 	following = false;
+			
+			System.out.format("wall follow added move %c \n", move);
+			moveQueue.add(move);
+		}
    }
 
 	public void updateMapAndDirection(char view[][]) {
@@ -448,7 +535,7 @@ public class Agent {
 		int h2cost = 0;
 		if (map.get(current) == '.') {
 			h2cost = 100000;
-		} else if (map.get(current) == '~' && map.get("raft") == 0){
+		} else if (map.get(current) == '~' && inventory.get("raft") == 0){
 			h2cost = 90000;
 		} else if (map.get(current) == 'T' && inventory.get("axe") == 0) {
 			h2cost = 90000;
@@ -496,7 +583,7 @@ public class Agent {
 			
 			closed.add(currCoord);
 			for (Coordinate nextCoord : adjacentCoords) {
-
+				System.out.println("check");
 				// All path movements are of "cost" 1, gCost of a coordinate is gCost of previous coordinate + 1
 				nextCoord.set_gCost(currCoord.get_gCost() + 1);
 				h2Cost = calculateH2Cost(nextCoord);
@@ -539,7 +626,7 @@ public class Agent {
 		int pathDirection = direction;
 		Stack<Coordinate> makeMovesToItem = aStar(currentLocation, itemCoord);
 		// Create a path to the item from current location
-		Coordinate currCoord = currentLocation;
+		Coordinate currCoord = new Coordinate(currentLocation.get_x(), currentLocation.get_y());
 		while (!makeMovesToItem.isEmpty()) {
 			pathCost += currCoord.get_fCost();
 			// DEBUG
@@ -581,7 +668,7 @@ public class Agent {
 		returnPath = aStar(currentLocation, new Coordinate(0, 0));
 		
 		// Add moves along the path to the move queue
-		Coordinate currCoord = currentLocation;
+		Coordinate currCoord = new Coordinate(currentLocation.get_x(), currentLocation.get_y());
 		while (!returnPath.empty()) {
 			pathCost += currCoord.get_fCost();
 			Coordinate nextCoord = returnPath.pop();
@@ -644,9 +731,15 @@ public class Agent {
 			// System.out.print("RETURNING NOW \n");
 			return nextMove = returnMoveQueue.poll();
 		}
-		
 
 		wallFollow(view);
+		if (!breadcrumbMoveQueue.isEmpty()) {
+			nextMove = breadcrumbMoveQueue.poll();
+			lastMove = nextMove;
+			System.out.println("asdasd");
+			return nextMove;
+		}
+		
 		nextMove = moveQueue.poll();
 		// DEBUG
 		System.out.print("NO ITEMS \n");
