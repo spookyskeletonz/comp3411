@@ -638,15 +638,23 @@ public class Agent {
 			//
 			// If current coordinate is goal, we have completed search	
 			if (currState.get_coordinate().equals(goal)) {
+				int pathCost = 0;
 				path.push(currState.get_coordinate());
 				while (!currState.get_prevState().get_coordinate().equals(start)) {
+					pathCost += currState.get_fCost();
 					path.push(currState.get_prevState().get_coordinate());
 					currState = currState.get_prevState();
 					// DEBUG
 					// System.out.print("GOAL (" + currCoord.get_x() + "," + currCoord.get_y() + ")" + " prev = "
 					// + currCoord.get_prevCoord().get_x() + "," + currCoord.get_prevCoord().get_y() + "\n\n");
 				}
-				return path;
+				System.out.format("total pathCost = %d\n", pathCost);
+				if (pathCost >= 90000) {
+					path.clear();
+					return path;
+				} else {
+					return path;
+				}
 			}
 			
 			ArrayList<Coordinate> adjacentCoords = getAdjacent(currState.get_coordinate());
@@ -654,13 +662,14 @@ public class Agent {
 			closed.add(currState);
 			for (Coordinate nextCoord : adjacentCoords) {
 				coordState nextState;
+				// Calculate heuristic costs
 				h2Cost = calculateH2Cost(nextCoord, currState.get_numDynamite());
+				gCost = currState.get_gCost() + 1;
 				if (map.get(nextCoord) == '*' && h2Cost < 90000) {
 					nextState = new coordState(nextCoord, gCost, currState, currState.get_numDynamite() - 1, currState.get_numRaft());
 				} else {
 					nextState = new coordState(nextCoord, gCost, currState, currState.get_numDynamite(), currState.get_numRaft());
 				}
-				gCost = currState.get_gCost() + 1;
 				nextState.set_hCost(h2Cost, goal);
 				// All path movements are of "cost" 1, gCost of a coordinate is gCost of previous coordinate + 1
 				
@@ -679,7 +688,6 @@ public class Agent {
 				if (!open.contains(nextState)) {
 					open.add(nextState);
 				}
-				// Calculate heuristic costs
 				// Set heuristic cost of coordinate
 				
 				// DEBUG
@@ -690,9 +698,6 @@ public class Agent {
 				// System.out.print("prev = " + nextCoord.get_prevCoord().get_x() + "," + nextCoord.get_prevCoord().get_y() + "\n\n");
 				
 			}
-
-			// When pulling adjacent coordinates, ensure that the coordinate to be expanded is contained in map
-			
 		}
 		
 		return path;
@@ -706,41 +711,40 @@ public class Agent {
 		Stack<Coordinate> makeMovesToItem = aStar(currentLocation, itemCoord);
 		// Create a path to the item from current location
 		Coordinate currCoord = currentLocation;
-		while (!makeMovesToItem.isEmpty()) {
-			pathCost += currCoord.get_fCost();
+		if (!makeMovesToItem.isEmpty()) {
+			while (!makeMovesToItem.isEmpty()) {
+				pathCost += currCoord.get_fCost();
+				// DEBUG
+				Coordinate nextCoord = makeMovesToItem.pop();
+				
+				// System.out.print("I see the item\n");
+				
+				pathDirection = moveDirection(currCoord, nextCoord, pathDirection, itemMoveQueue);
+				currCoord = nextCoord;
+				
+				// DEBUG
+				System.out.print("PATH TO ITEM (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + '\n');
+				
+			}
+			// System.out.print("move Queue head is " + moveQueue.element());
 			// DEBUG
-			Coordinate nextCoord = makeMovesToItem.pop();
-			
-			// System.out.print("I see the item\n");
-			
-			pathDirection = moveDirection(currCoord, nextCoord, pathDirection, itemMoveQueue);
-			currCoord = nextCoord;
-			
-			// DEBUG
-			System.out.print("PATH TO ITEM (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + '\n');
-			
-		}
-		// System.out.print("move Queue head is " + moveQueue.element());
-		// DEBUG
-		// System.out.format("next move is %c\n", itemMoveQueue.element());
-		if (pathCost < 6400) {
-			// // Return to where we started moving toward item
-			// makeMovesToItem = aStar(itemCoord, currentLocation);
-			// currCoord = itemCoord;
-			// while (!makeMovesToItem.isEmpty()) {
-			// Coordinate nextCoord = makeMovesToItem.pop();
-			// moveDirection(currCoord, nextCoord);
-			// currCoord = nextCoord;
-			// }
-			
-		}			
-		if (pathCost >= 90000) {
-			itemMoveQueue.clear();
-			foundItem = false;
-			return false;
-		} else {
+			// System.out.format("next move is %c\n", itemMoveQueue.element());
+			if (pathCost < 6400) {
+				// // Return to where we started moving toward item
+				// makeMovesToItem = aStar(itemCoord, currentLocation);
+				// currCoord = itemCoord;
+				// while (!makeMovesToItem.isEmpty()) {
+				// Coordinate nextCoord = makeMovesToItem.pop();
+				// moveDirection(currCoord, nextCoord);
+				// currCoord = nextCoord;
+				// }
+				
+			}
 			return true;
 		}
+		
+		foundItem = false;
+		return false;
 	}
 
 	public boolean cutTree() {
@@ -748,40 +752,40 @@ public class Agent {
 		int pathCost = 0;
 		int pathDirection = direction;
 		Stack<Coordinate> makeMovesToTree = aStar(currentLocation, treeCoord);
-		// Create a path to the item from current location
-		Coordinate currCoord = currentLocation;
-		while (!makeMovesToTree.isEmpty()) {
-			pathCost += currCoord.get_fCost();
-			// DEBUG
-			Coordinate nextCoord = makeMovesToTree.pop();
-			
-			// System.out.print("I see the item\n");
-			pathDirection = moveDirection(currCoord, nextCoord, pathDirection, treeMoveQueue);
-			currCoord = nextCoord;
-			
-			System.out.print("Path to tree (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + '\n');
-		}
 		
-		// System.out.print("move Queue head is " + moveQueue.element());
-		// DEBUG
-		// System.out.format("next move is %c\n", itemMoveQueue.element());
-		if (pathCost < 6400) {
-			// // Return to where we started moving toward item
-			// makeMovesToItem = aStar(itemCoord, currentLocation);
-			// currCoord = itemCoord;
-			// while (!makeMovesToItem.isEmpty()) {
-			// Coordinate nextCoord = makeMovesToItem.pop();
-			// moveDirection(currCoord, nextCoord);
-			// currCoord = nextCoord;
-			// }
+		// Create a path to the item from current location
+		if (!makeMovesToTree.isEmpty()) {
+			Coordinate currCoord = currentLocation;
+			while (!makeMovesToTree.isEmpty()) {
+				// DEBUG
+				Coordinate nextCoord = makeMovesToTree.pop();
+				
+				// System.out.print("I see the item\n");
+				pathDirection = moveDirection(currCoord, nextCoord, pathDirection, treeMoveQueue);
+				currCoord = nextCoord;
+				
+				System.out.print("Path to tree (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + '\n');
+			}
 			
-		}			
-		if (pathCost >= 90000) {
-			treeMoveQueue.clear();
-			return false;
-		} else {
+			// System.out.print("move Queue head is " + moveQueue.element());
+			// DEBUG
+			// System.out.format("next move is %c\n", itemMoveQueue.element());
+			if (pathCost < 6400) {
+				// // Return to where we started moving toward item
+				// makeMovesToItem = aStar(itemCoord, currentLocation);
+				// currCoord = itemCoord;
+				// while (!makeMovesToItem.isEmpty()) {
+				// Coordinate nextCoord = makeMovesToItem.pop();
+				// moveDirection(currCoord, nextCoord);
+				// currCoord = nextCoord;
+				// }
+				
+			}
+			
 			return true;
 		}
+		foundTree = false;
+		return false;
 	}
 	
 	public boolean returnToStart() {
@@ -793,24 +797,23 @@ public class Agent {
 		// Plan a path back to start
 		returnPath = aStar(currentLocation, new Coordinate(0, 0));
 		
-		// Add moves along the path to the move queue
-		Coordinate currCoord = currentLocation;
-		while (!returnPath.empty()) {
-			pathCost += currCoord.get_fCost();
-			Coordinate nextCoord = returnPath.pop();
-			pathDirection = moveDirection(currCoord, nextCoord, pathDirection, returnMoveQueue);
-			currCoord = nextCoord;
-			
-			// DEBUG
-			System.out.print("Path back (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + '\n');
-			
-		}
-		if (pathCost >= 90000) {
-			returnMoveQueue.clear();
-			return false;
-		} else {
+		if (!returnPath.isEmpty()) {
+			// Add moves along the path to the move queue
+			Coordinate currCoord = currentLocation;
+			while (!returnPath.empty()) {
+				pathCost += currCoord.get_fCost();
+				Coordinate nextCoord = returnPath.pop();
+				pathDirection = moveDirection(currCoord, nextCoord, pathDirection, returnMoveQueue);
+				currCoord = nextCoord;
+				
+				// DEBUG
+				System.out.print("Path back (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + '\n');
+				
+			}
 			return true;
 		}
+		
+		return false;
 	}
 	
 	public char get_action(char view[][]) {
