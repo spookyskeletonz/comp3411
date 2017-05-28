@@ -122,6 +122,7 @@ class CoordState implements Comparable<CoordState> {
 		this.coordinate = coordinate;
 		this.gCost = gCost;
 		this.numDynamite = numDynamite;
+		this.numRaft = numRaft;
 		this.prevState = prevState;
 	}
 	
@@ -791,6 +792,7 @@ public class Agent {
 		// Keep track of the total path cost to check for obstacles
 		int pathDirection = direction;
 		CoordState startState = new CoordState(currentLocation, 0, null, inventory.get("dynamite"), inventory.get("raft"));
+		System.out.format("RAFTS IN STARTSTATE = %d\n RAFTS IN INVENTORY = %d\n", startState.get_numRaft(), inventory.get("raft"));
 		Stack<CoordState> makeMovesToItem = aStar(startState, treasureCoord);
 		// Create a path to the item from current location
 		Coordinate currCoord = currentLocation;
