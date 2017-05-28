@@ -225,6 +225,8 @@ public class Agent {
 	Boolean foundTree = false;
 	//flag and coord for if a tree appears in the 5x5
 	Coordinate treeCoord = new Coordinate(-90, -90);
+	Boolean useRaftExplore = false;
+	Boolean onWater = false;
 	
 	
 
@@ -232,6 +234,9 @@ public class Agent {
 	private boolean isObstacle(char spaceToCheck) {
 
 		if (spaceToCheck == 'T' || spaceToCheck == '-' || spaceToCheck == '*' || spaceToCheck == '~' || spaceToCheck == '.') {
+			if(spaceToCheck == '~' && useRaftExplore == true){
+				return false;
+			}
 			return true;
 		}
 		return false;
@@ -253,7 +258,7 @@ public class Agent {
 		} else if (from.get_y() == to.get_y() + 1) {
 			nextDirection = 3;
 		} else {
-			System.out.println("moveDirection: wrong input\n");
+			//System.out.println("moveDirection: wrong input\n");
 			return -99;
 		}
 		
@@ -338,8 +343,10 @@ public class Agent {
 		if (following == true && isObstacle(leftView) == false && lastMove != 'l') {
 			move = 'l';
 		}
-		if (explored.get(currentLocation) > 2)
+		if (explored.get(currentLocation) > 2){
 			following = false;
+			if(inventory.get("raft") == 1 || onWater == true) useRaftExplore = true;
+		}
 		/*
 		 * t
 		 * 
@@ -347,7 +354,7 @@ public class Agent {
 		 * more than twice if (explored.get(currentLocation) > 2) { following = false; }
 		 */
 		
-		System.out.format("wall follow added move %c \n", move);
+		//System.out.format("wall follow added move %c \n", move);
 		moveQueue.add(move);
    }
 
@@ -429,7 +436,7 @@ public class Agent {
              		foundTree = true;
 						treeCoord = discovery;
              	}
-					System.out.print("put into map = |" + discoveredChar + "|" + "\n");
+					//System.out.print("put into map = |" + discoveredChar + "|" + "\n");
 
 					viewCounter++;
 				}
@@ -453,7 +460,7 @@ public class Agent {
              		foundTree = true;
 						treeCoord = discovery;
              	}
-					System.out.print("put into map = |" + discoveredChar + "|" + "\n");
+					//System.out.print("put into map = |" + discoveredChar + "|" + "\n");
                viewCounter++;
             }
          // Move West
@@ -479,7 +486,7 @@ public class Agent {
              		foundTree = true;
 						treeCoord = discovery;
              	}
-					System.out.print("put into map = |" + discoveredChar + "|" + "\n");
+					//System.out.print("put into map = |" + discoveredChar + "|" + "\n");
 					viewCounter++;
             }
          // Move South
@@ -502,7 +509,7 @@ public class Agent {
              		foundTree = true;
 						treeCoord = discovery;
              	}
-					System.out.print("put into map = |" + discoveredChar + "|" + "\n");
+					//System.out.print("put into map = |" + discoveredChar + "|" + "\n");
         		 viewCounter++;
             }
          }
@@ -602,9 +609,9 @@ public class Agent {
 		while (!open.isEmpty()) {
 			CoordState currState = open.poll();
 			// DEBUG
-			System.out.print("processing coordinate (" + currState.get_coordinate().get_x() + "," + currState.get_coordinate().get_y() + ")"
+			/*System.out.print("processing coordinate (" + currState.get_coordinate().get_x() + "," + currState.get_coordinate().get_y() + ")"
 					+ " fCost = " + currState.get_fCost() + "\n\n");
-			System.out.format("currState has %d dynamites and %d rafts\n", currState.get_numDynamite(), currState.get_numRaft());
+			System.out.format("currState has %d dynamites and %d rafts\n", currState.get_numDynamite(), currState.get_numRaft());*/
 			
 			if (startState.get_coordinate().equals(goal)) {
 				return statePath;
@@ -618,13 +625,13 @@ public class Agent {
 					// DEBUG
 					statePath.push(currState.get_prevState());
 					currState = currState.get_prevState();
-					System.out.format("path back through (%d,%d) with fCost = %d\n", currState.get_coordinate().get_x(),
-							currState.get_coordinate().get_y(), currState.get_hCost());
+					/*System.out.format("path back through (%d,%d) with fCost = %d\n", currState.get_coordinate().get_x(),
+							currState.get_coordinate().get_y(), currState.get_hCost());*/
 					// DEBUG
 					// System.out.print("GOAL (" + currCoord.get_x() + "," + currCoord.get_y() + ")" + " prev = "
 					// + currCoord.get_prevCoord().get_x() + "," + currCoord.get_prevCoord().get_y() + "\n\n");
 				}
-				System.out.format("total pathCost = %d\n", pathCost);
+				//System.out.format("total pathCost = %d\n", pathCost);
 				if (pathCost >= 90000) {
 					statePath.clear();
 					return statePath;
@@ -654,12 +661,12 @@ public class Agent {
 				
 				h2Cost = calculateH2Cost(nextState);
 				// DEBUG
-				System.out.print("next coord (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + " h2Cost = " + h2Cost + "\n");
+				//System.out.print("next coord (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + " h2Cost = " + h2Cost + "\n");
 				
 				nextState.set_hCost(h2Cost, goal);
 				
-				System.out.format("nextState (%d,%d) has h2Cost = %d\n\n", nextState.get_coordinate().get_x(),
-						nextState.get_coordinate().get_y(), nextState.get_hCost());
+				/*System.out.format("nextState (%d,%d) has h2Cost = %d\n\n", nextState.get_coordinate().get_x(),
+						nextState.get_coordinate().get_y(), nextState.get_hCost());*/
 				// All path movements are of "cost" 1, gCost of a coordinate is gCost of previous coordinate + 1
 				
 				// nextCoord.set_gCost(currState.get_gCost() + 1);
@@ -711,7 +718,7 @@ public class Agent {
 				currCoord = nextCoord;
 				
 				// DEBUG
-				System.out.print("PATH TO ITEM (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + '\n');
+				//System.out.print("PATH TO ITEM (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + '\n');
 				
 			}
 
@@ -740,7 +747,7 @@ public class Agent {
 		// Keep track of the total path cost to check for obstacles
 		int pathDirection = direction;
 		CoordState startState = new CoordState(currentLocation, 0, null, inventory.get("dynamite"), inventory.get("raft"));
-		System.out.format("RAFTS IN STARTSTATE = %d\n RAFTS IN INVENTORY = %d\n", startState.get_numRaft(), inventory.get("raft"));
+		//System.out.format("RAFTS IN STARTSTATE = %d\n RAFTS IN INVENTORY = %d\n", startState.get_numRaft(), inventory.get("raft"));
 		Stack<CoordState> makeMovesToItem = aStar(startState, treasureCoord);
 		// Create a path to the item from current location
 		Coordinate currCoord = currentLocation;
@@ -758,13 +765,13 @@ public class Agent {
 				currCoord = nextCoord;
 				
 				// DEBUG
-				System.out.print("PATH TO TREASURE (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + '\n');
+				//System.out.print("PATH TO TREASURE (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + '\n');
 				
 			}
 			
 			// DEBUG
-			System.out.format("return to start from (%d,%d) with %d rafts\n", currState.get_coordinate().get_x(),
-					currState.get_coordinate().get_y(), currState.get_numRaft());
+			/*System.out.format("return to start from (%d,%d) with %d rafts\n", currState.get_coordinate().get_x(),
+					currState.get_coordinate().get_y(), currState.get_numRaft());*/
 			
 			// if (makeMovesToItem.isEmpty()) {
 			// return false;
@@ -781,7 +788,7 @@ public class Agent {
 					pathDirection = moveDirection(currCoord, nextCoord, pathDirection, returnMoveQueue);
 					currState = nextState;
 					currCoord = nextCoord;
-					System.out.print("PATH TO BACK (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + '\n');
+					//System.out.print("PATH TO BACK (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + '\n');
 					
 				}
 				return true;
@@ -807,12 +814,13 @@ public class Agent {
 				// DEBUG
 				CoordState nextState = makeMovesToTree.pop();
 				Coordinate nextCoord = nextState.get_coordinate();
-				
+				System.out.println("current location: "+currentLocation.get_x()+","+currentLocation.get_y());
+				System.out.println("tree location: "+nextCoord.get_x()+","+nextCoord.get_y());
 				// System.out.print("I see the item\n");
 				pathDirection = moveDirection(currCoord, nextCoord, pathDirection, treeMoveQueue);
 				currCoord = nextCoord;
 				
-				System.out.print("Path to tree (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + '\n');
+				//System.out.print("Path to tree (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + '\n');
 			}
 			
 			// System.out.print("move Queue head is " + moveQueue.element());
@@ -835,80 +843,82 @@ public class Agent {
 		return false;
 	}
 	
-	public char get_action(char view[][]) {
 
-
-
-		// At each move update map and direction
-		updateMapAndDirection(view);
-		// DEBUG
-		System.out.print("last move was " + lastMove + " current direction = " + direction + "\n");
-		System.out.print("x coordinate = " + currentLocation.get_x() + " y coordinate = " + currentLocation.get_y() + "\n");
-		System.out.print("current location = " + map.get(currentLocation));
-		// Print current view of map
-		print_view(view);
-		
-		
-		// Initialise nextMove
-		char nextMove = ' ';
-		
-
-		
-		// +++++ TEMP +++++
-		// if (view[1][2] == '$') {
-		// nextMove = 'f';
-		// }
-		
-		if (treasureCoord.get_x() > -90 && treasureMoveQueue.isEmpty()){
-			retrieveTreasure();
-		}
-		if (!treasureMoveQueue.isEmpty()) {
-			lastMove = treasureMoveQueue.peek();
-			return treasureMoveQueue.poll();
-		}
-		
-		// Plan path to item if we aren't already moving toward an item
-		if (foundItem == true && itemMoveQueue.isEmpty()) {
-			// Check that we are able to retrieve item with items we already have
-			retrieveItem(itemCoord);
-		}
-		// If there are moves to be executed to retrieve the item, execute them
-		if (!itemMoveQueue.isEmpty()) {
-			nextMove = itemMoveQueue.poll();
-			lastMove = nextMove;
-			return nextMove;
-		}
-		
-		// If there are trees to cut, cut 'em
-		if (foundTree == true && inventory.get("axe") == 1 && treeMoveQueue.isEmpty()) {
-			System.out.print("Going to cut tree now? \n");
-			cutTree();
-		}
-		
-		if (!treeMoveQueue.isEmpty()) {
-			nextMove = treeMoveQueue.poll();
-			lastMove = nextMove;
-			return nextMove;
-		}
-		
-		// Execute path back if it exists;
-		if (!returnMoveQueue.isEmpty() && inventory.get("treasure") == 1) {
-			lastMove = returnMoveQueue.peek();
-			// DEBUG
-			// System.out.print("RETURNING NOW \n");
-			return nextMove = returnMoveQueue.poll();
-		}
-
-
-		wallFollow(view);
-		nextMove = moveQueue.poll();
-		// DEBUG
-		System.out.print("NO ITEMS \n");
-		// Update last move
-		lastMove = nextMove;
-		return nextMove;
-		
-	}
+	public char get_action(char view[][]){
+        // At each move update map and direction
+        updateMapAndDirection(view);
+        // DEBUG
+        System.out.print("last move was " + lastMove + " current direction = " + direction + "\n");
+        System.out.print("x coordinate = " + currentLocation.get_x() + " y coordinate = " + currentLocation.get_y() + "\n");
+        System.out.format("agent has %d dynamite\n", inventory.get("dynamite"));
+        System.out.format("at coord (-1,-14), we have %c\n", map.get(new Coordinate(-1, -14)));
+        // System.out.print("current location = " + map.get(currentLocation));
+        // Print current view of map
+        print_view(view);
+       
+       
+        // Initialise nextMove
+        char nextMove = ' ';
+       
+ 
+       
+        // +++++ TEMP +++++
+        // if (view[1][2] == '$') {
+        // nextMove = 'f';
+        // }
+       
+        if (treasureCoord.get_x() > -90 && treasureMoveQueue.isEmpty() && treeMoveQueue.isEmpty()) {
+            retrieveTreasure();
+        }
+        if (!treasureMoveQueue.isEmpty()) {
+            lastMove = treasureMoveQueue.peek();
+            return treasureMoveQueue.poll();
+        }
+       
+        // Execute path back if it exists;
+        if (!returnMoveQueue.isEmpty() && inventory.get("treasure") == 1) {
+            lastMove = returnMoveQueue.peek();
+            // DEBUG
+            // System.out.print("RETURNING NOW \n");
+            return nextMove = returnMoveQueue.poll();
+        }
+        // Plan path to item if we aren't already moving toward an item
+        if (foundItem == true && itemMoveQueue.isEmpty()) {
+            // Check that we are able to retrieve item with items we already have
+            System.out.print("retrieving item\n");
+            retrieveItem(itemCoord);
+        }
+        // If there are moves to be executed to retrieve the item, execute them
+        if (!itemMoveQueue.isEmpty()) {
+            nextMove = itemMoveQueue.poll();
+            lastMove = nextMove;
+            return nextMove;
+        }
+       
+        // If there are trees to cut, cut 'em
+        if (foundTree == true && inventory.get("axe") == 1 && treeMoveQueue.isEmpty()) {
+            System.out.print("Going to cut tree now? \n");
+            cutTree();
+        }
+       
+        if (!treeMoveQueue.isEmpty()) {
+            nextMove = treeMoveQueue.poll();
+            lastMove = nextMove;
+            return nextMove;
+        }
+       
+ 
+ 
+ 
+        wallFollow(view);
+        nextMove = moveQueue.poll();
+        // DEBUG
+        System.out.print("NO ITEMS \n");
+        // Update last move
+        lastMove = nextMove;
+        return nextMove;
+       
+    }
 
 
 // ==================================================================================================================================================
