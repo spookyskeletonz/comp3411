@@ -1,6 +1,6 @@
 /*********************************************
  *  Agent.java 
- *  Sample Agent for Text-Based Adventure Game
+ *  by Xu Wu z5061319 and Neil Sarkar
  *  COMP3411 Artificial Intelligence
  *  UNSW Session 1, 2017
 */
@@ -10,7 +10,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -22,9 +21,6 @@ import java.util.Stack;
 class Coordinate {
 	private int x;
 	private int y;
-	private int gCost = 0;
-	private int hCost = 0;
-	private Coordinate prevCoord;
 
 	public Coordinate(int x, int y) {
 		this.x = x;
@@ -75,37 +71,6 @@ class Coordinate {
 
 	public void set_y(int y) {
 		this.y = y;
-	}
-
-	public int get_fCost() {
-		int fcost = gCost + hCost;
-		return fcost;
-	}
-
-	public void set_hCost(int h2cost, Coordinate goal) {
-		this.hCost = h2cost + (Math.abs(x - goal.get_x()) + Math.abs(y - goal.get_y()));
-		//our heuristic is a combination of logic based on what is at that coordinate(the value for this is calculated in the a* method)
-		//and manhattan distance
-	}
-
-	public int get_hCost(){
-		return hCost;
-	}
-
-	public int get_gCost() {
-		return gCost;
-	}
-
-	public void set_gCost(int gCost) {
-		this.gCost = gCost;
-	}
-	
-	public Coordinate get_prevCoord(){
-		return prevCoord;
-	}
-	
-	public void set_prevCoord(Coordinate prevCoord) {
-		this.prevCoord = prevCoord;
 	}
 }
 
@@ -245,13 +210,10 @@ public class Agent {
 	private Map<String, Integer> inventory = new HashMap<String, Integer>();
 	// Maintains a queue of moves to execute
 	private Queue<Character> moveQueue = new LinkedList<Character>();
-	// Queue of moves to pick up an item
+	// Various move queues to follow
 	private Queue<Character> itemMoveQueue = new LinkedList<Character>();
-
 	private Queue<Character> treeMoveQueue = new LinkedList<Character>();
-	
 	private Queue<Character> returnMoveQueue = new LinkedList<Character>();
-	
 	private Queue<Character> treasureMoveQueue = new LinkedList<Character>();
 	
 	// Indicator for if the agent has seen an item on its' adventure
@@ -571,19 +533,6 @@ public class Agent {
       }
    }
 	
-	public class coordinateComparator implements Comparator<Coordinate> {
-		
-		@Override
-		public int compare(Coordinate a, Coordinate b) {
-			if (a.get_fCost() < b.get_fCost()) {
-				return -1;
-			} else if (a.get_fCost() > b.get_fCost()) {
-				return 1;
-			}
-			return 0;
-		}
-	}
-	
 	// Gets all documented adjacent coordinates for a given coordinate
 	private ArrayList<Coordinate> getAdjacent(Coordinate currCoord) {
 		ArrayList<Coordinate> adjacentCoords = new ArrayList<Coordinate>();
@@ -634,7 +583,6 @@ public class Agent {
 	// A* Search for path-finding between two coordinates
 	public Stack<CoordState> aStar(CoordState startState, Coordinate goal) {
 		Stack<CoordState> statePath = new Stack<CoordState>();
-		// Comparator<Coordinate> coordComparator = new coordinateComparator();
 		PriorityQueue<CoordState> open = new PriorityQueue<CoordState>();
 		ArrayList<CoordState> closed = new ArrayList<CoordState>();
 		
@@ -887,35 +835,6 @@ public class Agent {
 		return false;
 	}
 	
-//	public boolean returnToStart() {
-//		int pathDirection = direction;
-//		Stack<CoordState> returnPath = new Stack<CoordState>();
-//		// Coordinate tempCoord = new Coordinate()
-//		// DEBUG //System.out.print("I HAVE THE TREASURE \n\n");
-//		// Plan a path back to start
-//		CoordState startState = new CoordState(currentLocation, 0, null, inventory.get("dynamite"), inventory.get("raft"));
-//		returnPath = aStar(startState, new Coordinate(0, 0));
-//		
-//		if (!returnPath.isEmpty()) {
-//			// Add moves along the path to the move queue
-//			Coordinate currCoord = currentLocation;
-//			CoordState currState = startState;
-//			while (!returnPath.empty()) {
-//				CoordState nextState = returnPath.pop();
-//				Coordinate nextCoord = nextState.get_coordinate();
-//				pathDirection = moveDirection(currCoord, nextCoord, pathDirection, returnMoveQueue);
-//				currCoord = nextCoord;
-//				
-//				// DEBUG
-//				System.out.print("Path back (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + '\n');
-//				
-//			}
-//			return true;
-//		}
-//		
-//		return false;
-//	}
-//	
 	public char get_action(char view[][]) {
 
 
@@ -959,8 +878,8 @@ public class Agent {
 			lastMove = nextMove;
 			return nextMove;
 		}
-		//
 		
+		// If there are trees to cut, cut 'em
 		if (foundTree == true && inventory.get("axe") == 1 && treeMoveQueue.isEmpty()) {
 			System.out.print("Going to cut tree now? \n");
 			cutTree();
@@ -972,17 +891,11 @@ public class Agent {
 			return nextMove;
 		}
 		
-		//
-		// // Plan a path back if the agent has picked up the treasure
-		// if (inventory.containsKey("treasure") && inventory.get("treasure") == 1 && returnMoveQueue.isEmpty()) {
-		// returnToStart();
-		// }
-		
 		// Execute path back if it exists;
 		if (!returnMoveQueue.isEmpty() && inventory.get("treasure") == 1) {
 			lastMove = returnMoveQueue.peek();
 			// DEBUG
-			System.out.print("RETURNING NOW \n");
+			// System.out.print("RETURNING NOW \n");
 			return nextMove = returnMoveQueue.poll();
 		}
 
