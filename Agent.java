@@ -1,8 +1,23 @@
 /*********************************************
  *  Agent.java 
- *  by Xu Wu z5061319 and Neil Sarkar
+ *  by Xu Wu z5061319 and Arunav N Sarkar z5061286
  *  COMP3411 Artificial Intelligence
  *  UNSW Session 1, 2017
+*/
+/*
+Briefly describe how your program works, including any algorithms and data structures employed, and explain any design decisions you made along the way:
+	We decided to implement a wall following approach to exploration. When exploring the map our agent will store
+	any new areas at the border of its view into a hashmap, fittingly called map. This hashmap used a Coordinate class
+	we created as a key, and the characters at those coordinates as values. We used another hasmap for our inventory
+	stock. When coming across items, treasure or trees we utilised an A* search algorithim using a heuristic based
+	on the Manhattan heuristic and large values assigned to non traversable values such as walls and sometimes water.
+
+	In our A* search we used the Stack data structure for pathfinding. When queuing up moves for our agent to make,
+	we used a Queue data structure. We designed our agent to ahve multiple queues for separate objectives, so as
+	to remember paths to objectives. Our design also included the creation of a Coordinate class, and a CoordState
+	class. our CoordState class was used when finding optimal paths in A*, to keep track of item use along the path.
+
+
 */
 
 import java.io.IOException;
