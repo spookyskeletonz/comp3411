@@ -251,20 +251,24 @@ public class Agent {
 	
 	private Queue<Character> returnMoveQueue = new LinkedList<Character>();
 	
+	private Queue<Character> treasureMoveQueue = new LinkedList<Character>();
+	
 	// Indicator for if the agent has seen an item on its' adventure
 	Boolean foundItem = false;
 	// flag and coord for if an item appears in the 5x5
 	Coordinate itemCoord = new Coordinate(-90, -90);
-
+	Coordinate treasureCoord = new Coordinate(-90, -90);
 	// Indicator for tree to cut down
 	Boolean foundTree = false;
 	//flag and coord for if a tree appears in the 5x5
 	Coordinate treeCoord = new Coordinate(-90, -90);
 	
 	
+
 	// Checks if a provided character is an obstacle
 	private boolean isObstacle(char spaceToCheck) {
-		if (spaceToCheck == 'T' || spaceToCheck == '-' || spaceToCheck == '*' || spaceToCheck == '~'){
+
+		if (spaceToCheck == 'T' || spaceToCheck == '-' || spaceToCheck == '*' || spaceToCheck == '~' || spaceToCheck == '.') {
 			return true;
 		}
 		return false;
@@ -333,6 +337,7 @@ public class Agent {
 		char move = 'Z';
 
 		char frontView = view[1][2];
+		System.out.format("front view is %c \n", frontView);
 		char backView = view[3][2];
 		char rightView = view[2][3];
 		char leftView = view[2][1];
@@ -455,7 +460,9 @@ public class Agent {
              		foundItem = true;
              		itemCoord = discovery;
              	}
-
+					if (discoveredChar == '$') {
+						treasureCoord = discovery;
+					}
              	if(discoveredChar == 'T'){
              		foundTree = true;
 						treeCoord = discovery;
@@ -477,6 +484,9 @@ public class Agent {
              		foundItem = true;
              		itemCoord = discovery;
              	}
+					if (discoveredChar == '$') {
+						treasureCoord = discovery;
+					}
              	if(discoveredChar == 'T'){
              		foundTree = true;
 						treeCoord = discovery;
@@ -500,6 +510,9 @@ public class Agent {
              		foundItem = true;
              		itemCoord = discovery;
              	}
+					if (discoveredChar == '$') {
+						treasureCoord = discovery;
+					}
              	if(discoveredChar == 'T'){
              		foundTree = true;
 						treeCoord = discovery;
@@ -520,6 +533,9 @@ public class Agent {
              		foundItem = true;
              		itemCoord = discovery;
              	}
+					if (discoveredChar == '$') {
+						treasureCoord = discovery;
+					}
              	if(discoveredChar == 'T'){
              		foundTree = true;
 						treeCoord = discovery;
@@ -677,6 +693,11 @@ public class Agent {
 				} else {
 					nextState = new coordState(nextCoord, gCost, currState, currState.get_numDynamite(), currState.get_numRaft());
 				}
+				
+				if (map.get(currState.get_coordinate()) == '~' && map.get(nextCoord) != '~') {
+					nextState.set_numRaft(0);
+				}
+				
 				nextState.set_hCost(h2Cost, goal);
 				// All path movements are of "cost" 1, gCost of a coordinate is gCost of previous coordinate + 1
 				
@@ -709,7 +730,7 @@ public class Agent {
 	}
 
 	// Returns the pathCost to retrieve an item it sees
-	public boolean retrieveItem() {
+	public boolean retrieveItem(Coordinate itemCoord) {
 		// Keep track of the total path cost to check for obstacles
 
 		int pathDirection = direction;
@@ -750,6 +771,45 @@ public class Agent {
 		return false;
 	}
 
+	public boolean retrieveTreasure() {
+		// Keep track of the total path cost to check for obstacles
+		
+		int pathDirection = direction;
+		Stack<Coordinate> makeMovesToItem = aStar(currentLocation, treasureCoord);
+		// Create a path to the item from current location
+		Coordinate currCoord = currentLocation;
+		if (!makeMovesToItem.isEmpty()) {
+			while (!makeMovesToItem.isEmpty()) {
+				// DEBUG
+				Coordinate nextCoord = makeMovesToItem.pop();
+				
+				// System.out.print("I see the item\n");
+				
+				pathDirection = moveDirection(currCoord, nextCoord, pathDirection, treasureMoveQueue);
+				currCoord = nextCoord;
+				
+				// DEBUG
+				System.out.print("PATH TO treasure (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + '\n');
+				
+			}
+			// System.out.print("move Queue head is " + moveQueue.element());
+			// DEBUG
+			// System.out.format("next move is %c\n", itemMoveQueue.element());
+			
+			// // Return to where we started moving toward item
+			// makeMovesToItem = aStar(itemCoord, currentLocation);
+			// currCoord = itemCoord;
+			// while (!makeMovesToItem.isEmpty()) {
+			// Coordinate nextCoord = makeMovesToItem.pop();
+			// moveDirection(currCoord, nextCoord);
+			// currCoord = nextCoord;
+			// }
+			
+			return true;
+		}
+		return false;
+	}
+	
 	public boolean cutTree() {
 		// Keep track of the total path cost to check for obstacles
 		int pathDirection = direction;
@@ -832,6 +892,8 @@ public class Agent {
 		// Initialise nextMove
 		char nextMove = ' ';
 		
+
+		
 		// +++++ TEMP +++++
 		// if (view[1][2] == '$') {
 		// nextMove = 'f';
@@ -839,7 +901,7 @@ public class Agent {
 		// Plan path to item if we aren't already moving toward an item
 		if (foundItem == true && itemMoveQueue.isEmpty()) {
 			// Check that we are able to retrieve item with items we already have
-			retrieveItem();
+			retrieveItem(itemCoord);
 		}
 		// If there are moves to be executed to retrieve the item, execute them
 		if (!itemMoveQueue.isEmpty()) {
@@ -871,7 +933,7 @@ public class Agent {
 			// System.out.print("RETURNING NOW \n");
 			return nextMove = returnMoveQueue.poll();
 		}
-		
+
 
 		wallFollow(view);
 		nextMove = moveQueue.poll();
