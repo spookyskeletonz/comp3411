@@ -562,7 +562,7 @@ public class Agent {
 				foundItem = false;
 			}
 			if (map.get(currentLocation) == '$') {
-				treasureCoord = new Coordinate(0, 0);
+				treasureCoord = new Coordinate(-90, -90);
 				inventory.put("treasure", 1);
 				map.put(currentLocation, ' ');
 				foundItem = false;
