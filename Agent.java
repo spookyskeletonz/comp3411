@@ -6,17 +6,22 @@
 */
 /*
 Briefly describe how your program works, including any algorithms and data structures employed, and explain any design decisions you made along the way:
-	We decided to implement a wall following approach to exploration. When exploring the map our agent will store
-	any new areas at the border of its view into a hashmap, fittingly called map. This hashmap used a Coordinate class
-	we created as a key, and the characters at those coordinates as values. We used another hashmap for our inventory
-	stock. When coming across items, treasure or trees we utilised an A* search algorithm using a heuristic based
-	on the Manhattan heuristic and large values assigned to non traversable values such as walls and sometimes water,
-	upon finding an item that allows the player to deal with the obstacle, heuristics are reduced.
+	
+	We decided to implement a fairly simple wall following approach to exploration, which proved quite effective in the maze-like maps.
+	When initialising and when exploring the map our agent will store any new areas at the border of its view into a hashmap, fittingly called map. 
+	This hashmap uses a Coordinate class as a key, and the characters in view at those coordinates as values. 
+	We used another hashmap for our inventory stock, with simple string as keys and integers to denote number of items. 
+	When coming across items, treasure or trees within view, we utilise an A* search algorithm using a heuristic based
+	on the Manhattan heuristic and large heuristic values assigned to non traversable obstacles such as walls and sometimes water.
+	Upon acquiring an item that allows the player to deal with such obstacles, heuristics are reduced and the A* algorithm
+	allows the agent to path through them correctly.
 
 	In our A* search we used the Stack data structure for pathfinding. When queuing up moves for our agent to make,
 	we used a Queue data structure. We designed our agent to have multiple queues for separate objectives, so as
-	to remember paths to objectives. Our design also included the creation of a Coordinate class, and a CoordState
-	class. our CoordState class was used when finding optimal paths in A*, to keep track of item use along the path.
+	to remember paths to objectives, and without too much interference between different objectives.
+	Our design also included the creation of a Coordinate class, and a CoordState class,
+	The CoordState class was used when finding optimal paths in A*, to keep track of item use along the path.
+	When pathing to treasure, the agent checks to ensure it has sufficient tools to create a path back to the starting position to prevent being trapped.
 
 
 */
@@ -342,20 +347,12 @@ public class Agent {
 				useRaftExplore = true;
 			}
 		}
-		/*
-		 * t
-		 * 
-		 * /* the following code should now be redundant // Prevents following infinitely along an obstacle, move on if we arrive at same spot
-		 * more than twice if (explored.get(currentLocation) > 2) { following = false; }
-		 */
 		
-		// System.out.format("wall follow added move %c \n", move);
 		moveQueue.add(move);
    }
 
+	// Update map and direction based on previous move and current view
 	public void updateMapAndDirection(char view[][]) {
-
-
 
       // Start of game,  map starting view
       if(lastMove == 'Z'){
@@ -431,9 +428,6 @@ public class Agent {
              		foundTree = true;
 						treeCoord = discovery;
              	}
-					System.out.format("discovery = (%d,%d) ", discovery.get_x(), discovery.get_y());
-					System.out.print("put into map = |" + map.get(discovery) + "|" + "\n");
-				
 
 					viewCounter++;
 				}
@@ -457,7 +451,6 @@ public class Agent {
              		foundTree = true;
 						treeCoord = discovery;
              	}
-					System.out.print("put into map = |" + discoveredChar + "|" + "\n");
                viewCounter++;
             }
          // Move West
@@ -480,7 +473,6 @@ public class Agent {
              		foundTree = true;
 						treeCoord = discovery;
              	}
-					System.out.print("put into map = |" + discoveredChar + "|" + "\n");
 					viewCounter++;
             }
          // Move South
@@ -503,7 +495,6 @@ public class Agent {
              		foundTree = true;
 						treeCoord = discovery;
              	}
-					System.out.print("put into map = |" + discoveredChar + "|" + "\n");
         		 viewCounter++;
             }
          }
@@ -611,10 +602,11 @@ public class Agent {
 				statePath.push(currState);
 				while (!currState.get_prevState().get_coordinate().equals(startState.get_coordinate())) {
 					pathCost += currState.get_prevState().get_fCost();
-					// DEBUG
 					statePath.push(currState.get_prevState());
 					currState = currState.get_prevState();
 				}
+				
+				// If the path includes an obstacle the agent cannot deal with, scrap the path
 				if (pathCost >= 90000) {
 					statePath.clear();
 					inventory.put("dynamite", startState.get_numDynamite());
@@ -692,6 +684,7 @@ public class Agent {
 		return false;
 	}
 
+	// Method to retrieve treasure
 	public boolean retrieveTreasure() {
 		// Keep track of the total path cost to check for obstacles
 		int pathDirection = direction;
@@ -705,7 +698,6 @@ public class Agent {
 		
 		if (!makeMovesToItem.isEmpty()) {
 			while (!makeMovesToItem.isEmpty()) {
-				// DEBUG
 				CoordState nextState = makeMovesToItem.pop();
 				Coordinate nextCoord = nextState.get_coordinate();
 				
@@ -742,6 +734,7 @@ public class Agent {
 		return false;
 	}
 	
+	// Method to make a path to a tree and cut it
 	public boolean cutTree() {
 		// Keep track of the total path cost to check for obstacles
 		int pathDirection = direction;
@@ -752,11 +745,9 @@ public class Agent {
 		if (!makeMovesToTree.isEmpty()) {
 			Coordinate currCoord = currentLocation;
 			while (!makeMovesToTree.isEmpty()) {
-				// DEBUG
 				CoordState nextState = makeMovesToTree.pop();
 				Coordinate nextCoord = nextState.get_coordinate();
 				
-				// System.out.print("I see the item\n");
 				pathDirection = moveDirection(currCoord, nextCoord, pathDirection, treeMoveQueue);
 				currCoord = nextCoord;
 				
@@ -811,7 +802,7 @@ public class Agent {
 		if (foundTree == true && inventory.get("axe") == 1 && treeMoveQueue.isEmpty()) {
 			cutTree();
 		}
-		
+		// Executes tree path
 		if (!treeMoveQueue.isEmpty()) {
 			nextMove = treeMoveQueue.poll();
 			lastMove = nextMove;
