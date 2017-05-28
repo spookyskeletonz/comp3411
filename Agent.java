@@ -8,12 +8,13 @@
 Briefly describe how your program works, including any algorithms and data structures employed, and explain any design decisions you made along the way:
 	We decided to implement a wall following approach to exploration. When exploring the map our agent will store
 	any new areas at the border of its view into a hashmap, fittingly called map. This hashmap used a Coordinate class
-	we created as a key, and the characters at those coordinates as values. We used another hasmap for our inventory
-	stock. When coming across items, treasure or trees we utilised an A* search algorithim using a heuristic based
-	on the Manhattan heuristic and large values assigned to non traversable values such as walls and sometimes water.
+	we created as a key, and the characters at those coordinates as values. We used another hashmap for our inventory
+	stock. When coming across items, treasure or trees we utilised an A* search algorithm using a heuristic based
+	on the Manhattan heuristic and large values assigned to non traversable values such as walls and sometimes water,
+	upon finding an item that allows the player to deal with the obstacle, heuristics are reduced.
 
 	In our A* search we used the Stack data structure for pathfinding. When queuing up moves for our agent to make,
-	we used a Queue data structure. We designed our agent to ahve multiple queues for separate objectives, so as
+	we used a Queue data structure. We designed our agent to have multiple queues for separate objectives, so as
 	to remember paths to objectives. Our design also included the creation of a Coordinate class, and a CoordState
 	class. our CoordState class was used when finding optimal paths in A*, to keep track of item use along the path.
 
@@ -261,8 +262,6 @@ public class Agent {
 	// input 2 adjacent coordinates and this function will queue up the required moves to move there
 	private int moveDirection(Coordinate from, Coordinate to, int prevDirection, Queue<Character> moveQueue) {
 		int nextDirection = 0;
-		// DEBUG
-		// System.out.format("moveDirection: from (%d, %d), to (%d, %d) \n", from.get_x(), from.get_y(), to.get_x(), to.get_y());
 		// Change player direction to face goal location
 		if (from.get_x() == to.get_x() - 1) {
 			nextDirection = 0;
@@ -278,21 +277,14 @@ public class Agent {
 		}
 		
 		int rotates = prevDirection - nextDirection;
-		// DEBUG
-		// System.out.format("moveDirection: rotates = %d - %d = %d \n", prevDirection, nextDirection, rotates);
 		//rotate to face right direction
 		if (rotates < 0){
 			while(rotates < 0) {
-				// System.out.print("ERROR HERE?\n");
 				moveQueue.add('l');
-				// DEBUG
-				// System.out.format("moveDirection added move l to queue\n");
 				rotates++;
 			}
 		} else if (rotates > 0) {
 			while (rotates > 0) {
-				// DEBUG
-				// System.out.format("moveDirection added move r to queue\n");
 				moveQueue.add('r');
 				rotates--;
 			}
@@ -474,9 +466,6 @@ public class Agent {
 				int viewCounter = 0;
 				for (int counter = -2; counter <= 2; counter++) {
 					Coordinate discovery = new Coordinate(currentLocation.get_x() - 2, currentLocation.get_y() + counter);
-					// DEBUG
-					// System.out.print("DISCOVERY IS " + discovery.get_x() + "," + discovery.get_y() + "\n");
-					// System.out.print("ViewCounter = " + viewCounter + "\n");
 					char discoveredChar = view[0][viewCounter];
 					map.put(discovery, discoveredChar);
 					explored.put(discovery, 0);
@@ -601,14 +590,10 @@ public class Agent {
 		PriorityQueue<CoordState> open = new PriorityQueue<CoordState>();
 		ArrayList<CoordState> closed = new ArrayList<CoordState>();
 		
-		// Number of dynamites that can be used on the path
-		// public CoordState(Coordinate coordinate, int gCost, int hCost, CoordState prevState, int numDynamites, int numRaft) {
 		
 		// Heuristic cost of a coordinate based on what value the coordinate holds
 		int h2Cost = 0;
 		int gCost = 0;
-		// start.set_gCost(0);
-		// start.set_hCost(0, goal);
 		
 		startState.set_hCost(0, goal);
 		// Set fCost for start
@@ -616,10 +601,6 @@ public class Agent {
 		
 		while (!open.isEmpty()) {
 			CoordState currState = open.poll();
-			// DEBUG
-			// System.out.print("processing coordinate (" + currState.get_coordinate().get_x() + "," + currState.get_coordinate().get_y() + ")"
-			// + " fCost = " + currState.get_fCost() + "\n\n");
-			System.out.format("currState has %d dynamites and %d rafts\n", currState.get_numDynamite(), currState.get_numRaft());
 			
 			if (startState.get_coordinate().equals(goal)) {
 				return statePath;
@@ -633,13 +614,7 @@ public class Agent {
 					// DEBUG
 					statePath.push(currState.get_prevState());
 					currState = currState.get_prevState();
-					System.out.format("path back through (%d,%d) with fCost = %d\n", currState.get_coordinate().get_x(),
-							currState.get_coordinate().get_y(), currState.get_hCost());
-					// DEBUG
-					// System.out.print("GOAL (" + currCoord.get_x() + "," + currCoord.get_y() + ")" + " prev = "
-					// + currCoord.get_prevCoord().get_x() + "," + currCoord.get_prevCoord().get_y() + "\n\n");
 				}
-				System.out.format("total pathCost = %d\n", pathCost);
 				if (pathCost >= 90000) {
 					statePath.clear();
 					inventory.put("dynamite", startState.get_numDynamite());
@@ -654,7 +629,7 @@ public class Agent {
 			closed.add(currState);
 			for (Coordinate nextCoord : adjacentCoords) {
 				CoordState nextState;
-				// Calculate heuristic costs
+				// All path movements are of "cost" 1, gCost of a coordinate is gCost of previous coordinate + 1
 				gCost = currState.get_gCost() + 1;
 				
 				nextState = new CoordState(nextCoord, gCost, currState, currState.get_numDynamite(), currState.get_numRaft());
@@ -664,24 +639,16 @@ public class Agent {
 					nextState.set_numRaft(0);
 				}
 				
+				// Calculate heuristic costs
 				h2Cost = calculateH2Cost(nextState);
 				
 				if (map.get(nextCoord) == '*' && h2Cost < 90000) {
 					nextState.set_numDynamite(nextState.get_numDynamite() - 1);
 				}
 				
-				// DEBUG
-				// System.out.print("next coord (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + " h2Cost = " + h2Cost + "\n");
 				
 				nextState.set_hCost(h2Cost, goal);
 				
-				// System.out.format("nextState (%d,%d) has h2Cost = %d\n\n", nextState.get_coordinate().get_x(),
-				// nextState.get_coordinate().get_y(), nextState.get_hCost());
-				// All path movements are of "cost" 1, gCost of a coordinate is gCost of previous coordinate + 1
-				
-				// nextCoord.set_gCost(currState.get_gCost() + 1);
-				// nextCoord.set_hCost(h2Cost, goal);
-				// nextCoord.set_prevCoord(currCoord);
 				
 				// If closed set contains adjacent coordinate move onto next coordinate
 				if (closed.contains(nextState)) {
@@ -692,14 +659,6 @@ public class Agent {
 				if (!open.contains(nextState)) {
 					open.add(nextState);
 				}
-				// Set heuristic cost of coordinate
-				
-				// DEBUG
-				// System.out.print("NEXT ELEMENT IN OPEN IS " + open.element().get_x() + "," + open.element().get_y());
-				// DEBUG
-				// System.out.print(" with fCost = " + open.element().get_fCost() + "\n");
-				// DEBUG
-				// System.out.print("prev = " + nextCoord.get_prevCoord().get_x() + "," + nextCoord.get_prevCoord().get_y() + "\n\n");
 				
 			}
 		}
@@ -718,33 +677,13 @@ public class Agent {
 		Coordinate currCoord = currentLocation;
 		if (!makeMovesToItem.isEmpty()) {
 			while (!makeMovesToItem.isEmpty()) {
-				// DEBUG
 				CoordState nextState = makeMovesToItem.pop();
 				Coordinate nextCoord = nextState.get_coordinate();
-				
-				// System.out.print("I see the item\n");
 				
 				pathDirection = moveDirection(currCoord, nextCoord, pathDirection, itemMoveQueue);
 				currCoord = nextCoord;
 				
-				// DEBUG
-				System.out.print("PATH TO ITEM (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + '\n');
-				
 			}
-
-
-			// System.out.print("move Queue head is " + moveQueue.element());
-			// DEBUG
-			// System.out.format("next move is %c\n", itemMoveQueue.element());
-
-			// // Return to where we started moving toward item
-				// makeMovesToItem = aStar(itemCoord, currentLocation);
-				// currCoord = itemCoord;
-				// while (!makeMovesToItem.isEmpty()) {
-				// Coordinate nextCoord = makeMovesToItem.pop();
-				// moveDirection(currCoord, nextCoord);
-				// currCoord = nextCoord;
-				// }
 				
 			return true;
 		}
@@ -773,22 +712,11 @@ public class Agent {
 				
 				pathDirection = moveDirection(currCoord, nextCoord, pathDirection, treasureMoveQueue);
 				
-				System.out.format("next move is %c", treasureMoveQueue.peek());
 				currState = nextState;
 				currCoord = nextCoord;
 				
-				// DEBUG
-//				System.out.print("PATH TO TREASURE (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + '\n');
-				
 			}
 			
-			// DEBUG
-//			System.out.format("return to start from (%d,%d) with %d rafts\n", currState.get_coordinate().get_x(),
-			// currState.get_coordinate().get_y(), currState.get_numRaft());
-			
-			// if (makeMovesToItem.isEmpty()) {
-			// return false;
-			// }
 			// Check that a valid path exists back to the start from the treasure before retrieving it
 			Stack<CoordState> returnToStart = aStar(currState, new Coordinate(0, 0));
 			// Put path back into return queue;
@@ -801,7 +729,6 @@ public class Agent {
 					pathDirection = moveDirection(currCoord, nextCoord, pathDirection, returnMoveQueue);
 					currState = nextState;
 					currCoord = nextCoord;
-//					System.out.print("PATH TO BACK (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + '\n');
 					
 				}
 				return true;
@@ -833,22 +760,7 @@ public class Agent {
 				pathDirection = moveDirection(currCoord, nextCoord, pathDirection, treeMoveQueue);
 				currCoord = nextCoord;
 				
-				System.out.print("Path to tree (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + '\n');
 			}
-			
-			// System.out.print("move Queue head is " + moveQueue.element());
-			// DEBUG
-			// System.out.format("next move is %c\n", itemMoveQueue.element());
-
-			
-			// // Return to where we started moving toward item
-				// makeMovesToItem = aStar(itemCoord, currentLocation);
-				// currCoord = itemCoord;
-				// while (!makeMovesToItem.isEmpty()) {
-				// Coordinate nextCoord = makeMovesToItem.pop();
-				// moveDirection(currCoord, nextCoord);
-				// currCoord = nextCoord;
-				// }
 			
 			return true;
 		}
@@ -858,33 +770,20 @@ public class Agent {
 	
 	public char get_action(char view[][]) {
 
-
-
 		// At each move update map and direction
 		updateMapAndDirection(view);
-		// DEBUG
-		System.out.print("last move was " + lastMove + " current direction = " + direction + "\n");
-		System.out.print("x coordinate = " + currentLocation.get_x() + " y coordinate = " + currentLocation.get_y() + "\n");
-		System.out.format("agent has %d dynamite\n", inventory.get("dynamite"));
-		System.out.format("at coord (-1,-14), we have %c\n", map.get(new Coordinate(-1, -14)));
-		// System.out.print("current location = " + map.get(currentLocation));
+		
 		// Print current view of map
 		print_view(view);
-		
 		
 		// Initialise nextMove
 		char nextMove = ' ';
 		
-
-		
-		// +++++ TEMP +++++
-		// if (view[1][2] == '$') {
-		// nextMove = 'f';
-		// }
-		
+		// If treasure has been found, make a path to treasure
 		if (treasureCoord.get_x() > -90 && treasureMoveQueue.isEmpty() && pathForTreasure && treeMoveQueue.isEmpty()) {
 			retrieveTreasure();
 		}
+		// Run path to treasure
 		if (!treasureMoveQueue.isEmpty()) {
 			lastMove = treasureMoveQueue.peek();
 			return nextMove = treasureMoveQueue.poll();
@@ -893,15 +792,12 @@ public class Agent {
 		// Execute path back if it exists;
 		if (!returnMoveQueue.isEmpty() && inventory.get("treasure") == 1) {
 			lastMove = returnMoveQueue.peek();
-			// DEBUG
-			// System.out.print("RETURNING NOW \n");
 			return nextMove = returnMoveQueue.poll();
 		}
 		
 		// Plan path to item if we aren't already moving toward an item
 		if (foundItem == true && itemMoveQueue.isEmpty()) {
 			// Check that we are able to retrieve item with items we already have
-			// System.out.print("retrieving item\n");
 			retrieveItem(itemCoord);
 		}
 		// If there are moves to be executed to retrieve the item, execute them
@@ -913,7 +809,6 @@ public class Agent {
 		
 		// If there are trees to cut, cut 'em
 		if (foundTree == true && inventory.get("axe") == 1 && treeMoveQueue.isEmpty()) {
-			// System.out.print("Going to cut tree now? \n");
 			cutTree();
 		}
 		
@@ -928,8 +823,6 @@ public class Agent {
 
 		wallFollow(view);
 		nextMove = moveQueue.poll();
-		// DEBUG
-		System.out.print("NO ITEMS \n");
 		// Update last move
 		lastMove = nextMove;
 		return nextMove;
