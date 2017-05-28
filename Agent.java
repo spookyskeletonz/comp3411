@@ -243,15 +243,19 @@ public class Agent {
 	
 	Boolean pathForTreasure = true;
 	
-
+	Boolean useRaftExplore = false;
+	Boolean onWater = false;
+	
 	// Checks if a provided character is an obstacle
 	private boolean isObstacle(char spaceToCheck) {
 
 		if (spaceToCheck == 'T' || spaceToCheck == '-' || spaceToCheck == '*' || spaceToCheck == '~' || spaceToCheck == '.') {
+			if (spaceToCheck == '~' && useRaftExplore == true) {
+				return false;
+			}
 			return true;
 		}
 		return false;
-		
 	}
 
 	// input 2 adjacent coordinates and this function will queue up the required moves to move there
@@ -269,7 +273,7 @@ public class Agent {
 		} else if (from.get_y() == to.get_y() + 1) {
 			nextDirection = 3;
 		} else {
-			System.out.println("moveDirection: wrong input\n");
+			// System.out.println("moveDirection: wrong input\n");
 			return -99;
 		}
 		
@@ -325,24 +329,6 @@ public class Agent {
 		char leftView = view[2][1];
 		
 		
-		// // If any obstacle to the left, we are following
-		// if (isObstacle(leftView) == true || explored.get(getAdjacent(currentLocation).get((direction + 1) % 4)) > 0) {
-		// following = true;
-		// }
-		//
-		// // If no obstacles in front then move forward or rotate right if obstacle directly ahead
-		// if (isObstacle(frontView) || explored.get(getAdjacent(currentLocation).get(direction)) > 2) {
-		// move = 'r';
-		// } else {
-		// move = 'f';
-		// }
-		//
-		// // If previously following a wall, turn to ensure we keep it on the left
-		// if (following == true && isObstacle(leftView) == false && lastMove != 'l'
-		// || explored.get(getAdjacent(currentLocation).get((direction + 1) % 4)) > 2 && lastMove != 'l' && following == true) {
-		// move = 'l';
-		// }
-		
 		if (isObstacle(leftView) == true) {
 			following = true;
 		}
@@ -358,8 +344,12 @@ public class Agent {
 		if (following == true && isObstacle(leftView) == false && lastMove != 'l') {
 			move = 'l';
 		}
-		if (explored.get(currentLocation) > 2)
+		if (explored.get(currentLocation) > 2) {
 			following = false;
+			if (inventory.get("raft") == 1 || onWater == true) {
+				useRaftExplore = true;
+			}
+		}
 		/*
 		 * t
 		 * 
@@ -367,7 +357,7 @@ public class Agent {
 		 * more than twice if (explored.get(currentLocation) > 2) { following = false; }
 		 */
 		
-		System.out.format("wall follow added move %c \n", move);
+		// System.out.format("wall follow added move %c \n", move);
 		moveQueue.add(move);
    }
 
@@ -598,7 +588,7 @@ public class Agent {
 		if (map.get(current) == '~' && currentState.get_numRaft() <= 0) {
 			h2cost = 90000;
 		} else if (map.get(current) == '~' && currentState.get_numRaft() > 0) {
-			h2cost = 10000;
+			h2cost = 1000;
 		}
 		
 
@@ -911,7 +901,7 @@ public class Agent {
 		// Plan path to item if we aren't already moving toward an item
 		if (foundItem == true && itemMoveQueue.isEmpty()) {
 			// Check that we are able to retrieve item with items we already have
-			System.out.print("retrieving item\n");
+			// System.out.print("retrieving item\n");
 			retrieveItem(itemCoord);
 		}
 		// If there are moves to be executed to retrieve the item, execute them
@@ -923,7 +913,7 @@ public class Agent {
 		
 		// If there are trees to cut, cut 'em
 		if (foundTree == true && inventory.get("axe") == 1 && treeMoveQueue.isEmpty()) {
-			System.out.print("Going to cut tree now? \n");
+			// System.out.print("Going to cut tree now? \n");
 			cutTree();
 		}
 		
