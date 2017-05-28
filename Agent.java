@@ -666,12 +666,12 @@ public class Agent {
 				int pathCost = 0;
 				statePath.push(currState);
 				while (!currState.get_prevState().get_coordinate().equals(startState.get_coordinate())) {
-					 System.out.format("path back through (%d,%d) with fCost = %d\n", currState.get_coordinate().get_x(),
-							currState.get_coordinate().get_y(), currState.get_hCost());
-					pathCost += currState.get_fCost();
+					pathCost += currState.get_prevState().get_fCost();
 					// DEBUG
 					statePath.push(currState.get_prevState());
 					currState = currState.get_prevState();
+					System.out.format("path back through (%d,%d) with fCost = %d\n", currState.get_coordinate().get_x(),
+							currState.get_coordinate().get_y(), currState.get_hCost());
 					// DEBUG
 					// System.out.print("GOAL (" + currCoord.get_x() + "," + currCoord.get_y() + ")" + " prev = "
 					// + currCoord.get_prevCoord().get_x() + "," + currCoord.get_prevCoord().get_y() + "\n\n");
@@ -818,12 +818,12 @@ public class Agent {
 			System.out.format("return to start from (%d,%d) with %d rafts\n", currState.get_coordinate().get_x(),
 					currState.get_coordinate().get_y(), currState.get_numRaft());
 			
+			// if (makeMovesToItem.isEmpty()) {
+			// return false;
+			// }
 			// Check that a valid path exists back to the start from the treasure before retrieving it
 			Stack<CoordState> returnToStart = aStar(currState, new Coordinate(0, 0));
 			// Put path back into return queue;
-			if (makeMovesToItem.isEmpty()) {
-				return false;
-			}
 			if (!returnToStart.isEmpty()) {
 				currCoord = currState.get_coordinate();
 				while (!returnToStart.isEmpty()) {
@@ -982,7 +982,7 @@ public class Agent {
 		if (!returnMoveQueue.isEmpty() && inventory.get("treasure") == 1) {
 			lastMove = returnMoveQueue.peek();
 			// DEBUG
-			// System.out.print("RETURNING NOW \n");
+			System.out.print("RETURNING NOW \n");
 			return nextMove = returnMoveQueue.poll();
 		}
 
