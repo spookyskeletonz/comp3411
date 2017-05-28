@@ -293,7 +293,7 @@ public class Agent {
 		} else if (from.get_y() == to.get_y() + 1) {
 			nextDirection = 3;
 		} else {
-			System.out.println("moveDirection: wrong input\n");
+			//System.out.println("moveDirection: wrong input\n");
 			return -99;
 		}
 		
@@ -314,7 +314,7 @@ public class Agent {
 				// DEBUG
 				// System.out.format("moveDirection added move r to queue\n");
 				moveQueue.add('r');
-				System.out.println("r");
+				//System.out.println("r");
 				rotates--;
 			}
 		}
@@ -332,7 +332,7 @@ public class Agent {
 		}
 
 		moveQueue.add('f');
-		System.out.println("f");
+		//System.out.println("f");
 		return nextDirection;
 	}
 
@@ -380,7 +380,7 @@ public class Agent {
 		if(tracingBreadcrumb == false){
 			if(isObstacle(leftView) == true || explored.get(getAdjacent(currentLocation).get((direction + 1)%4)) > 0){
 				if(isObstacle(rightView) == true || explored.get(getAdjacent(currentLocation).get(((direction-1)+4)%4)) > 0){
-					System.out.println("flag 1");
+					//System.out.println("flag 1");
 					layingBreadcrumb = true;
 				}
 			}
@@ -388,44 +388,46 @@ public class Agent {
 
 		//push to stack
 		if(layingBreadcrumb == true){
-			System.out.println("flag 2");
+			//System.out.println("flag 2");
 			breadcrumb.push(new Coordinate(currentLocation.get_x(), currentLocation.get_y()));
 		}
-		System.out.println(findOpening(currentLocation, view));
+		//System.out.println(findOpening(currentLocation, view));
 
 		//if reach deadend, start tracing back
 		if(findOpening(currentLocation, view) == -1){
-			System.out.println("flag 3");
+			//System.out.println("flag 3");
 			tracingBreadcrumb = true;
 			layingBreadcrumb = false;
 		}
 
 		//tracing back breadcrumb till find a coordinate with opening
 		if(tracingBreadcrumb == true){
-			if(findOpening(currentLocation, view) == -1){
-				System.out.println("flag 4.1");
+			if(findOpening(currentLocation, view) == -1 && breadcrumbMoveQueue.isEmpty()){
+				//System.out.println("flag 4.1");
 				Coordinate next = breadcrumb.pop();
 				while(next.equals(currentLocation)){
-					System.out.println("x1:"+next.get_x()+"y1:"+next.get_y());
+					//System.out.println("x1:"+next.get_x()+"y1:"+next.get_y());
 					next = breadcrumb.pop();
 				}
-				System.out.println("x:"+next.get_x()+"y:"+next.get_y());
-				System.out.println(next.get_x());
+				System.out.println("Current location is: "+currentLocation.get_x()+","+currentLocation.get_y());
+				System.out.println("Will now a* to backtrace to "+next.get_x()+","+next.get_y());
+				//System.out.println("x:"+next.get_x()+"y:"+next.get_y());
+				//System.out.println(next.get_x());
 				Stack<Coordinate> path = aStar(currentLocation, next);
 				Coordinate current = new Coordinate(currentLocation.get_x(), currentLocation.get_y());
 				int pathDirection = direction;
 				while(!path.empty()){
-					System.out.println("flag 4.1.1");
+					//System.out.println("flag 4.1.1");
 					next = path.pop();
 					pathDirection = moveDirection(current, next, pathDirection, breadcrumbMoveQueue);
 					current = next;
 				}
-			} else {
-				System.out.println("flag 4.2");
+			} else if(findOpening(currentLocation, view) != -1) {
+				//System.out.println("flag 4.2");
 				tracingBreadcrumb = false;
 				moveDirection(currentLocation, getAdjacent(currentLocation).get(findOpening(currentLocation, view)), direction, moveQueue);
 			}
-			System.out.println("chec2");
+			//System.out.println("chec2");
 			//return;
 		} else {
 
@@ -466,7 +468,7 @@ public class Agent {
 			// if (explored.get(currentLocation) > 2)
 			// 	following = false;
 			
-			System.out.format("wall follow added move %c \n", move);
+			//System.out.format("wall follow added move %c \n", move);
 			moveQueue.add(move);
 		}
    }
@@ -547,7 +549,7 @@ public class Agent {
              		foundTree = true;
 						treeCoord = discovery;
              	}
-					System.out.print("put into map = |" + discoveredChar + "|" + "\n");
+					//System.out.print("put into map = |" + discoveredChar + "|" + "\n");
 
 					viewCounter++;
 				}
@@ -568,7 +570,7 @@ public class Agent {
              		foundTree = true;
 						treeCoord = discovery;
              	}
-					System.out.print("put into map = |" + discoveredChar + "|" + "\n");
+					//System.out.print("put into map = |" + discoveredChar + "|" + "\n");
                viewCounter++;
             }
          // Move West
@@ -591,7 +593,7 @@ public class Agent {
              		foundTree = true;
 						treeCoord = discovery;
              	}
-					System.out.print("put into map = |" + discoveredChar + "|" + "\n");
+					//System.out.print("put into map = |" + discoveredChar + "|" + "\n");
 					viewCounter++;
             }
          // Move South
@@ -611,7 +613,7 @@ public class Agent {
              		foundTree = true;
 						treeCoord = discovery;
              	}
-					System.out.print("put into map = |" + discoveredChar + "|" + "\n");
+					//System.out.print("put into map = |" + discoveredChar + "|" + "\n");
         		 viewCounter++;
             }
          }
@@ -690,7 +692,7 @@ public class Agent {
 			h2cost = 90000;
 		} else if (map.get(current) == '-' && inventory.get("key") == 0){
 			h2cost = 90000;
-		} else if (map.get(current) == '*' && numDynamite == 0){
+		} else if (map.get(current) == '*' && numDynamite == 0 || map.get(current) == '*' && tracingBreadcrumb == true){
 			h2cost = 90000;
 		}
 		return h2cost;
@@ -719,9 +721,9 @@ public class Agent {
 		while (!open.isEmpty()) {
 			coordState currState = open.poll();
 			// DEBUG
-			System.out.print("processing coordinate (" + currState.get_coordinate().get_x() + "," + currState.get_coordinate().get_y() + ")"
-					+ " fCost = " + currState.get_fCost() + "\n\n");
-			System.out.format("currState has %d dynamites \n", currState.get_numDynamite());
+			//System.out.print("processing coordinate (" + currState.get_coordinate().get_x() + "," + currState.get_coordinate().get_y() + ")"
+			//		+ " fCost = " + currState.get_fCost() + "\n\n");
+			//System.out.format("currState has %d dynamites \n", currState.get_numDynamite());
 			//
 			// If current coordinate is goal, we have completed search	
 			if (currState.get_coordinate().equals(goal)) {
@@ -804,7 +806,7 @@ public class Agent {
 			currCoord = nextCoord;
 			
 			// DEBUG
-			System.out.print("PATH TO ITEM (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + '\n');
+			//System.out.print("PATH TO ITEM (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + '\n');
 			
 		}
 		// System.out.print("move Queue head is " + moveQueue.element());
@@ -846,7 +848,7 @@ public class Agent {
 			pathDirection = moveDirection(currCoord, nextCoord, pathDirection, treeMoveQueue);
 			currCoord = nextCoord;
 			
-			System.out.print("Path to tree (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + '\n');
+			//System.out.print("Path to tree (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + '\n');
 		}
 		
 		// System.out.print("move Queue head is " + moveQueue.element());
@@ -889,7 +891,7 @@ public class Agent {
 			currCoord = nextCoord;
 			
 			// DEBUG
-			System.out.print("Path back (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + '\n');
+			//System.out.print("Path back (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + '\n');
 			
 		}
 		if (pathCost >= 90000) {
@@ -907,9 +909,9 @@ public class Agent {
 		// At each move update map and direction
 		updateMapAndDirection(view);
 		// DEBUG
-		System.out.print("last move was " + lastMove + " current direction = " + direction + "\n");
-		System.out.print("x coordinate = " + currentLocation.get_x() + " y coordinate = " + currentLocation.get_y() + "\n");
-		System.out.print("current location = " + map.get(currentLocation));
+		//System.out.print("last move was " + lastMove + " current direction = " + direction + "\n");
+		//System.out.print("x coordinate = " + currentLocation.get_x() + " y coordinate = " + currentLocation.get_y() + "\n");
+		//System.out.print("current location = " + map.get(currentLocation));
 		// Print current view of map
 		print_view(view);
 		
@@ -929,18 +931,20 @@ public class Agent {
 		// If there are moves to be executed to retrieve the item, execute them
 		if (!itemMoveQueue.isEmpty()) {
 			nextMove = itemMoveQueue.poll();
+			System.out.println("item move: " + nextMove);
 			lastMove = nextMove;
 			return nextMove;
 		}
 		//
 		
 		if (foundTree == true && inventory.get("axe") == 1 && treeMoveQueue.isEmpty()) {
-			System.out.print("Going to cut tree now? \n");
+			//System.out.print("Going to cut tree now? \n");
 			cutTree();
 		}
 		
 		if (!treeMoveQueue.isEmpty()) {
 			nextMove = treeMoveQueue.poll();
+			System.out.println("tree move: " + nextMove);
 			lastMove = nextMove;
 			return nextMove;
 		}
@@ -952,8 +956,7 @@ public class Agent {
 		}
 		if (!returnMoveQueue.isEmpty()) {
 			lastMove = returnMoveQueue.peek();
-			// DEBUG
-			// System.out.print("RETURNING NOW \n");
+			System.out.println("return move: " + lastMove);
 			return nextMove = returnMoveQueue.poll();
 		}
 
@@ -961,14 +964,12 @@ public class Agent {
 		if (!breadcrumbMoveQueue.isEmpty()) {
 			nextMove = breadcrumbMoveQueue.poll();
 			lastMove = nextMove;
-			System.out.println("asdasd");
+			System.out.println("breadcrumb move: " + nextMove);
 			return nextMove;
 		}
 		
 		nextMove = moveQueue.poll();
-		// DEBUG
-		System.out.print("NO ITEMS \n");
-		// Update last move
+		System.out.println("move: " + nextMove);
 		lastMove = nextMove;
 		return nextMove;
 		
