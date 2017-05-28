@@ -115,7 +115,7 @@ class CoordState implements Comparable<CoordState> {
 	private int numDynamite;
 	private int numRaft;
 	private int gCost;
-	private int hCost;
+	private int hCost = 0;
 	private CoordState prevState;
 	
 	public CoordState(Coordinate coordinate, int gCost, CoordState prevState, int numDynamite, int numRaft) {
@@ -164,7 +164,7 @@ class CoordState implements Comparable<CoordState> {
 	@Override
 	public int hashCode() {
 		int result = this.coordinate.get_x();
-		result = 31 * result + this.coordinate.get_y();
+		result = 17 * result + this.coordinate.get_y();
 		return result;
 	}
 	
@@ -665,10 +665,10 @@ public class Agent {
 				int pathCost = 0;
 				statePath.push(currState);
 				while (!currState.get_prevState().get_coordinate().equals(startState.get_coordinate())) {
+					 System.out.format("path back through (%d,%d) with fCost = %d\n", currState.get_coordinate().get_x(),
+							currState.get_coordinate().get_y(), currState.get_hCost());
 					pathCost += currState.get_fCost();
 					// DEBUG
-					// System.out.format("path back through (%d,%d) with fCost = %d", currState.get_coordinate().get_x(),
-					// currState.get_coordinate().get_y(), currState.get_fCost());
 					statePath.push(currState.get_prevState());
 					currState = currState.get_prevState();
 					// DEBUG
@@ -691,8 +691,6 @@ public class Agent {
 				CoordState nextState;
 				// Calculate heuristic costs
 				gCost = currState.get_gCost() + 1;
-				System.out
-						.print("next coord (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + " h2Cost = " + h2Cost + "\n\n");
 				
 				// If the path contains a wall and we have dynamite then we can use it
 				if (map.get(nextCoord) == '*' && currState.get_numDynamite() > 0) {
@@ -706,7 +704,13 @@ public class Agent {
 				}
 				
 				h2Cost = calculateH2Cost(nextState);
+				// DEBUG
+				System.out.print("next coord (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + " h2Cost = " + h2Cost + "\n");
+				
 				nextState.set_hCost(h2Cost, goal);
+				
+				System.out.format("nextState (%d,%d) has h2Cost = %d\n\n", nextState.get_coordinate().get_x(),
+						nextState.get_coordinate().get_y(), nextState.get_hCost());
 				// All path movements are of "cost" 1, gCost of a coordinate is gCost of previous coordinate + 1
 				
 				// nextCoord.set_gCost(currState.get_gCost() + 1);
