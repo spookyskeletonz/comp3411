@@ -109,6 +109,124 @@ class Coordinate {
 	}
 }
 
+// States to use in conjunction with astar
+class coordState implements Comparable<coordState> {
+	private Coordinate coordinate;
+	private int numDynamite;
+	private int numRaft;
+	private int gCost;
+	private int hCost;
+	private coordState prevState;
+	
+	public coordState(Coordinate coordinate, int gCost, coordState prevState, int numDynamite, int numRaft) {
+		this.coordinate = coordinate;
+		this.gCost = gCost;
+		this.numDynamite = numDynamite;
+		this.prevState = prevState;
+	}
+	
+	@Override
+	public int compareTo(coordState state) {
+		// TODO Auto-generated method stub
+		return this.get_fCost() - state.get_fCost();
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (!(o instanceof coordState)) {
+			return false;
+		}
+		
+		final coordState state = (coordState) o;
+		
+		if (this.get_coordinate().get_x() != state.get_coordinate().get_x()) {
+			return false;
+		}
+		
+		if (this.get_coordinate().get_y() != state.get_coordinate().get_y()) {
+			return false;
+		}
+		
+		if (this.get_numDynamite() != state.get_numDynamite()) {
+			return false;
+		}
+		
+		if (this.get_numRaft() != state.get_numRaft()) {
+			return false;
+		}
+		
+		return true;
+	}
+
+	// Create unique hashcode for each coordinate
+	@Override
+	public int hashCode() {
+		int result = this.coordinate.get_x();
+		result = 31 * result + this.coordinate.get_y();
+		return result;
+	}
+	
+	public Coordinate get_coordinate() {
+		return coordinate;
+	}
+
+	public void set_oordinate(Coordinate coordinate) {
+		this.coordinate = coordinate;
+	}
+
+	public int get_numDynamite() {
+		return numDynamite;
+	}
+
+	public void set_numDynamite(int numDynamite) {
+		this.numDynamite = numDynamite;
+	}
+
+	public int get_numRaft() {
+		return numRaft;
+	}
+
+	public void set_numRaft(int numRaft) {
+		this.numRaft = numRaft;
+	}
+
+	public coordState get_prevState() {
+		return prevState;
+	}
+
+	public void set_prevState(coordState prevState) {
+		this.prevState = prevState;
+	}
+	
+	public int get_gCost() {
+		return gCost;
+	}
+	
+	public void set_gCost(int gCost) {
+		this.gCost = gCost;
+	}
+	
+	public int get_hCost() {
+		return hCost;
+	}
+	
+	public void set_hCost(int h2cost, Coordinate goal) {
+		this.hCost = h2cost + (Math.abs(coordinate.get_x() - goal.get_x()) + Math.abs(coordinate.get_y() - goal.get_y()));
+		// our heuristic is a combination of logic based on what is at that coordinate(the value for this is calculated in the a* method)
+		// and manhattan distance
+	}
+	
+	public int get_fCost() {
+		return gCost + hCost;
+	}
+	
+
+}
+
+
 public class Agent {
 
 	// Create map
@@ -463,31 +581,36 @@ public class Agent {
 	// A* Search for path-finding between two coordinates
 	public Stack<Coordinate> aStar(Coordinate start, Coordinate goal) {
 		Stack<Coordinate> path = new Stack<Coordinate>();
-		Comparator<Coordinate> coordComparator = new coordinateComparator();
-		PriorityQueue<Coordinate> open = new PriorityQueue<Coordinate>(100, coordComparator);
-		ArrayList<Coordinate> closed = new ArrayList<Coordinate>();
+		// Comparator<Coordinate> coordComparator = new coordinateComparator();
+		PriorityQueue<coordState> open = new PriorityQueue<coordState>();
+		ArrayList<coordState> closed = new ArrayList<coordState>();
 		
-		int numDynamite = inventory.get("dynamite");
+		// Number of dynamites that can be used on the path
+		// public coordState(Coordinate coordinate, int gCost, int hCost, coordState prevState, int numDynamites, int numRaft) {
 		
 		// Heuristic cost of a coordinate based on what value the coordinate holds
 		int h2Cost = 0;
-		start.set_gCost(0);
-		start.set_hCost(0, goal);
+		int gCost = 0;
+		// start.set_gCost(0);
+		// start.set_hCost(0, goal);
+		coordState startState = new coordState(start, gCost, null, inventory.get("dynamite"), inventory.get("raft"));
+		startState.set_hCost(0, goal);
 		// Set fCost for start
-		open.add(start);
+		open.add(startState);
 		
 		while (!open.isEmpty()) {
-			Coordinate currCoord = open.poll();
+			coordState currState = open.poll();
 			// DEBUG
-			System.out.print("processing coordinate (" + currCoord.get_x() + "," + currCoord.get_y() + ")" + " fCost = "
-					+ currCoord.get_fCost() + "\n\n");
+			System.out.print("processing coordinate (" + currState.get_coordinate().get_x() + "," + currState.get_coordinate().get_y() + ")"
+					+ " fCost = " + currState.get_fCost() + "\n\n");
+			System.out.format("currState has %d dynamites \n", currState.get_numDynamite());
 			//
-			// If current coordinate is goal, we have completed search
-			if (currCoord.equals(goal)) {
-				path.push(goal);
-				while (!currCoord.get_prevCoord().equals(start)) {
-					path.push(currCoord.get_prevCoord());
-					currCoord = currCoord.get_prevCoord();
+			// If current coordinate is goal, we have completed search	
+			if (currState.get_coordinate().equals(goal)) {
+				path.push(currState.get_coordinate());
+				while (!currState.get_prevState().get_coordinate().equals(start)) {
+					path.push(currState.get_prevState().get_coordinate());
+					currState = currState.get_prevState();
 					// DEBUG
 					// System.out.print("GOAL (" + currCoord.get_x() + "," + currCoord.get_y() + ")" + " prev = "
 					// + currCoord.get_prevCoord().get_x() + "," + currCoord.get_prevCoord().get_y() + "\n\n");
@@ -495,26 +618,35 @@ public class Agent {
 				return path;
 			}
 			
-			ArrayList<Coordinate> adjacentCoords = getAdjacent(currCoord);
+			ArrayList<Coordinate> adjacentCoords = getAdjacent(currState.get_coordinate());
 			
-			closed.add(currCoord);
+			closed.add(currState);
 			for (Coordinate nextCoord : adjacentCoords) {
-
+				coordState nextState;
+				h2Cost = calculateH2Cost(nextCoord, currState.get_numDynamite());
+				if (map.get(nextCoord) == '*' && h2Cost < 90000) {
+					nextState = new coordState(nextCoord, gCost, currState, currState.get_numDynamite() - 1, currState.get_numRaft());
+				} else {
+					nextState = new coordState(nextCoord, gCost, currState, currState.get_numDynamite(), currState.get_numRaft());
+				}
+				gCost = currState.get_gCost() + 1;
+				nextState.set_hCost(h2Cost, goal);
 				// All path movements are of "cost" 1, gCost of a coordinate is gCost of previous coordinate + 1
-				nextCoord.set_gCost(currCoord.get_gCost() + 1);
-				h2Cost = calculateH2Cost(nextCoord, numDynamite);
-				nextCoord.set_hCost(h2Cost, goal);
-				nextCoord.set_prevCoord(currCoord);
+				
+				// nextCoord.set_gCost(currState.get_gCost() + 1);
+				// nextCoord.set_hCost(h2Cost, goal);
+				// nextCoord.set_prevCoord(currCoord);
+				
 				// If closed set contains adjacent coordinate move onto next coordinate
-				if (closed.contains(nextCoord)) {
+				if (closed.contains(nextState)) {
 					continue;
 				}
 				// System.out
 				// .print("next coord (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + " fCost = " + nextCoord.get_fCost() + "\n\n");
 				
 				// If open set does not contain adjacent coordinate,
-				if (!open.contains(nextCoord)) {
-					open.add(nextCoord);
+				if (!open.contains(nextState)) {
+					open.add(nextState);
 				}
 				// Calculate heuristic costs
 				// Set heuristic cost of coordinate
