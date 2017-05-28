@@ -426,6 +426,7 @@ public class Agent {
 				//System.out.println("flag 4.2");
 				tracingBreadcrumb = false;
 				moveDirection(currentLocation, getAdjacent(currentLocation).get(findOpening(currentLocation, view)), direction, moveQueue);
+				return;
 			}
 			//System.out.println("chec2");
 			//return;
@@ -437,7 +438,7 @@ public class Agent {
 			}
 			
 			// If no obstacles in front then move forward or rotate right if obstacle directly ahead
-			if (isObstacle(frontView) || explored.get(getAdjacent(currentLocation).get(direction)) > 2) {
+			if (isObstacle(frontView) || explored.get(getAdjacent(currentLocation).get(direction)) > 0) {
 			move = 'r';
 			} else {
 			move = 'f';
@@ -445,7 +446,7 @@ public class Agent {
 			
 			// If previously following a wall, turn to ensure we keep it on the left
 			if (following == true && isObstacle(leftView) == false && lastMove != 'l'
-			|| explored.get(getAdjacent(currentLocation).get((direction + 1) % 4)) > 2 && lastMove != 'l' && following == true) {
+			|| map.get(getAdjacent(currentLocation).get((direction + 1) % 4)) == ' ' && explored.get(getAdjacent(currentLocation).get((direction + 1) % 4)) == 0 && lastMove != 'l' && following == true) {
 			move = 'l';
 			}
 
