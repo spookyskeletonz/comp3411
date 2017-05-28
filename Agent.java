@@ -127,7 +127,6 @@ class coordState implements Comparable<coordState> {
 	
 	@Override
 	public int compareTo(coordState state) {
-		// TODO Auto-generated method stub
 		return this.get_fCost() - state.get_fCost();
 	}
 	
@@ -317,7 +316,8 @@ public class Agent {
 			map.put(to, ' ');
 		} else if (map.get(to) == 'T' && inventory.get("axe") == 1) {
 			moveQueue.add('c');
-			//inventory.put("raft", 1);
+			map.put(to, ' ');
+			inventory.put("raft", 1);
 		} else if (map.get(to) == '*' && inventory.get("dynamite") != 0) {
 			moveQueue.add('b');
 			int currentDynamite = inventory.get("dynamite");
@@ -603,7 +603,7 @@ public class Agent {
 			h2cost = 90000;
 		} else if (map.get(current) == '-' && inventory.get("key") == 0){
 			h2cost = 90000;
-		} else if (map.get(current) == '*' && numDynamite == 0){
+		} else if (map.get(current) == '*' && numDynamite <= 0) {
 			h2cost = 90000;
 		}
 		return h2cost;
@@ -635,13 +635,18 @@ public class Agent {
 			System.out.print("processing coordinate (" + currState.get_coordinate().get_x() + "," + currState.get_coordinate().get_y() + ")"
 					+ " fCost = " + currState.get_fCost() + "\n\n");
 			System.out.format("currState has %d dynamites \n", currState.get_numDynamite());
-			//
+			
+			if (start.equals(goal)) {
+				return path;
+			}
 			// If current coordinate is goal, we have completed search	
 			if (currState.get_coordinate().equals(goal)) {
 				int pathCost = 0;
 				path.push(currState.get_coordinate());
 				while (!currState.get_prevState().get_coordinate().equals(start)) {
 					pathCost += currState.get_fCost();
+					System.out.format("path back through (%d,%d) with fCost = %d", currState.get_coordinate().get_x(),
+							currState.get_coordinate().get_y(), currState.get_fCost());
 					path.push(currState.get_prevState().get_coordinate());
 					currState = currState.get_prevState();
 					// DEBUG
@@ -665,6 +670,8 @@ public class Agent {
 				// Calculate heuristic costs
 				h2Cost = calculateH2Cost(nextCoord, currState.get_numDynamite());
 				gCost = currState.get_gCost() + 1;
+				System.out
+						.print("next coord (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + " h2Cost = " + h2Cost + "\n\n");
 				if (map.get(nextCoord) == '*' && h2Cost < 90000) {
 					nextState = new coordState(nextCoord, gCost, currState, currState.get_numDynamite() - 1, currState.get_numRaft());
 				} else {
@@ -681,8 +688,6 @@ public class Agent {
 				if (closed.contains(nextState)) {
 					continue;
 				}
-				// System.out
-				// .print("next coord (" + nextCoord.get_x() + "," + nextCoord.get_y() + ")" + " fCost = " + nextCoord.get_fCost() + "\n\n");
 				
 				// If open set does not contain adjacent coordinate,
 				if (!open.contains(nextState)) {
@@ -706,14 +711,13 @@ public class Agent {
 	// Returns the pathCost to retrieve an item it sees
 	public boolean retrieveItem() {
 		// Keep track of the total path cost to check for obstacles
-		int pathCost = 0;
+
 		int pathDirection = direction;
 		Stack<Coordinate> makeMovesToItem = aStar(currentLocation, itemCoord);
 		// Create a path to the item from current location
 		Coordinate currCoord = currentLocation;
 		if (!makeMovesToItem.isEmpty()) {
 			while (!makeMovesToItem.isEmpty()) {
-				pathCost += currCoord.get_fCost();
 				// DEBUG
 				Coordinate nextCoord = makeMovesToItem.pop();
 				
@@ -729,8 +733,8 @@ public class Agent {
 			// System.out.print("move Queue head is " + moveQueue.element());
 			// DEBUG
 			// System.out.format("next move is %c\n", itemMoveQueue.element());
-			if (pathCost < 6400) {
-				// // Return to where we started moving toward item
+
+			// // Return to where we started moving toward item
 				// makeMovesToItem = aStar(itemCoord, currentLocation);
 				// currCoord = itemCoord;
 				// while (!makeMovesToItem.isEmpty()) {
@@ -739,7 +743,6 @@ public class Agent {
 				// currCoord = nextCoord;
 				// }
 				
-			}
 			return true;
 		}
 		
@@ -749,7 +752,6 @@ public class Agent {
 
 	public boolean cutTree() {
 		// Keep track of the total path cost to check for obstacles
-		int pathCost = 0;
 		int pathDirection = direction;
 		Stack<Coordinate> makeMovesToTree = aStar(currentLocation, treeCoord);
 		
@@ -770,8 +772,9 @@ public class Agent {
 			// System.out.print("move Queue head is " + moveQueue.element());
 			// DEBUG
 			// System.out.format("next move is %c\n", itemMoveQueue.element());
-			if (pathCost < 6400) {
-				// // Return to where we started moving toward item
+
+			
+			// // Return to where we started moving toward item
 				// makeMovesToItem = aStar(itemCoord, currentLocation);
 				// currCoord = itemCoord;
 				// while (!makeMovesToItem.isEmpty()) {
@@ -779,8 +782,6 @@ public class Agent {
 				// moveDirection(currCoord, nextCoord);
 				// currCoord = nextCoord;
 				// }
-				
-			}
 			
 			return true;
 		}
@@ -789,7 +790,6 @@ public class Agent {
 	}
 	
 	public boolean returnToStart() {
-		int pathCost = 0;
 		int pathDirection = direction;
 		Stack<Coordinate> returnPath = new Stack<Coordinate>();
 		// Coordinate tempCoord = new Coordinate()
@@ -801,7 +801,6 @@ public class Agent {
 			// Add moves along the path to the move queue
 			Coordinate currCoord = currentLocation;
 			while (!returnPath.empty()) {
-				pathCost += currCoord.get_fCost();
 				Coordinate nextCoord = returnPath.pop();
 				pathDirection = moveDirection(currCoord, nextCoord, pathDirection, returnMoveQueue);
 				currCoord = nextCoord;
